@@ -1,0 +1,436 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  #lh-root {
+    font-family: 'Inter', sans-serif;
+    background: #080c14;
+    color: #e2e8f0;
+    min-height: 620px;
+    position: relative;
+    overflow: hidden;
+  }
+  #intro {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 10; background: #080c14;
+    transition: opacity 0.9s ease, transform 0.9s ease;
+  }
+  #intro.exit { opacity: 0; transform: scale(1.05); pointer-events: none; }
+  #three-canvas { display: block; cursor: grab; }
+  #three-canvas:active { cursor: grabbing; }
+  .intro-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px; font-weight: 700;
+    color: #fff; margin-top: 2px; letter-spacing: -0.5px;
+  }
+  .intro-title span { color: #f0c060; }
+  .intro-sub {
+    font-size: 11px; color: #5a4e38;
+    margin-top: 8px; letter-spacing: 0.12em;
+    text-transform: uppercase; font-family: 'JetBrains Mono', monospace;
+  }
+  .enter-btn {
+    margin-top: 30px; padding: 10px 42px;
+    background: transparent;
+    border: 1px solid rgba(210,160,50,0.5);
+    color: #d4a032; font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.12em;
+    cursor: pointer; text-transform: uppercase;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .enter-btn:hover { background: #d4a032; color: #080c14; border-color: #d4a032; }
+  .blink {
+    display: inline-block; width: 8px; height: 15px;
+    background: #f0c060; margin-left: 3px;
+    vertical-align: middle; animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  #main {
+    position: absolute; inset: 0; overflow-y: auto;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.7s ease 0.3s;
+    background: #080c14;
+  }
+  #main.visible { opacity: 1; pointer-events: all; }
+  #main::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(210,160,50,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(210,160,50,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+  .main-inner { position: relative; z-index: 1; padding: 28px 28px 48px; max-width: 900px; margin: 0 auto; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid rgba(210,160,50,0.1); }
+  .logo { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: #fff; }
+  .logo span { color: #f0c060; }
+  .logo-sub { font-size: 11px; color: #5a4e38; margin-top: 2px; letter-spacing: 0.06em; }
+  .search-wrap { display: flex; align-items: center; gap: 8px; background: #0e1118; border: 1px solid #2a2010; padding: 7px 14px; width: 220px; }
+  .search-wrap input { background: transparent; border: none; outline: none; color: #e2e8f0; font-family: 'Inter', sans-serif; font-size: 13px; width: 100%; }
+  .search-wrap input::placeholder { color: #5a4e38; }
+  .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 26px; }
+  .pill { padding: 5px 14px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #d4a032; border: 1px solid #2a2010; background: transparent; cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em; }
+  .pill:hover, .pill.active { background: #d4a032; color: #080c14; border-color: #d4a032; }
+  .pill.all.active { background: #f0c060; color: #080c14; border-color: #f0c060; }
+  .section-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5a4e38; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: rgba(210,160,50,0.07); }
+  .topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-bottom: 36px; }
+  .topic-card { background: #0e1118; border: 1px solid #1e1a10; padding: 16px 18px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; overflow: hidden; }
+  .topic-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent, #d4a032); opacity: 0; transition: opacity 0.2s; }
+  .topic-card:hover { border-color: var(--accent, #d4a032); background: #131208; }
+  .topic-card:hover::before { opacity: 1; }
+  .card-tag-row { display: flex; gap: 5px; margin-bottom: 9px; flex-wrap: wrap; }
+  .card-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 2px 7px; border: 1px solid; letter-spacing: 0.05em; text-transform: uppercase; }
+  .tag-viz { color: #f0c060; border-color: rgba(240,192,96,0.3); }
+  .tag-sim { color: #67e8c8; border-color: rgba(103,232,200,0.3); }
+  .tag-theory { color: #a78bfa; border-color: rgba(167,139,250,0.3); }
+  .tag-game { color: #fb923c; border-color: rgba(251,146,60,0.3); }
+  .tag-interview { color: #f9a8d4; border-color: rgba(249,168,212,0.3); }
+  .card-title { font-size: 13px; font-weight: 500; color: #e2e8f0; margin-bottom: 5px; }
+  .card-desc { font-size: 12px; color: #5a4e38; line-height: 1.6; }
+  .card-arrow { position: absolute; right: 14px; bottom: 14px; color: var(--accent, #d4a032); font-size: 13px; opacity: 0; transition: opacity 0.2s, transform 0.2s; }
+  .topic-card:hover .card-arrow { opacity: 1; transform: translateX(3px); }
+  .stat-bar { display: flex; gap: 28px; margin-bottom: 28px; padding: 14px 18px; background: #0e1118; border: 1px solid #1e1a10; }
+  .stat-item { display: flex; flex-direction: column; gap: 2px; }
+  .stat-num { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: #f0c060; }
+  .stat-lbl { font-size: 11px; color: #5a4e38; text-transform: uppercase; letter-spacing: 0.08em; }
+</style>
+
+<div id="lh-root">
+  <div id="intro">
+    <canvas id="three-canvas" width="380" height="240" aria-hidden="true"></canvas>
+    <div class="intro-title">The Lecture <span>Hall</span><span class="blink"></span></div>
+    <div class="intro-sub">A living EE textbook</div>
+    <button class="enter-btn" id="enter-btn">Enter the Hall</button>
+  </div>
+  <div id="main">
+    <div class="main-inner">
+      <div class="topbar">
+        <div>
+          <div class="logo">The <span>Lecture</span> Hall</div>
+          <div class="logo-sub">EE · Living Textbook · Open Contribution</div>
+        </div>
+        <div class="search-wrap">
+          <input type="text" id="search-input" placeholder="Search topics..." />
+        </div>
+      </div>
+      <div class="stat-bar">
+        <div class="stat-item"><span class="stat-num">9</span><span class="stat-lbl">Sections</span></div>
+        <div class="stat-item"><span class="stat-num">50+</span><span class="stat-lbl">Topics</span></div>
+        <div class="stat-item"><span class="stat-num">4</span><span class="stat-lbl">Visualizations</span></div>
+        <div class="stat-item"><span class="stat-num">∞</span><span class="stat-lbl">Growing</span></div>
+      </div>
+      <div class="filter-bar" id="filter-bar">
+        <button class="pill all active" data-filter="all">All</button>
+        <button class="pill" data-filter="viz">Visualization</button>
+        <button class="pill" data-filter="sim">Simulator</button>
+        <button class="pill" data-filter="theory">Theory</button>
+        <button class="pill" data-filter="game">Mini-game</button>
+        <button class="pill" data-filter="interview">Interview</button>
+      </div>
+      <div id="cards-container"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const SECTIONS = [
+  { name:"Power Electronics", accent:"#f0c060", topics:[
+    {title:"Power Factor Visualizer",desc:"Watch voltage, current, and power shift with phase angle.",tags:["viz"]},
+    {title:"Beer Glass PF Analogy",desc:"Beer = real power, foam = reactive — intuitive intro to PF.",tags:["viz"]},
+    {title:"LLC Operating Modes",desc:"Explore how frequency moves the LLC across operating regions.",tags:["viz"]},
+    {title:"Boost Inductor Position",desc:"Why inductor placement in a boost PFC matters for EMI.",tags:["viz"]},
+    {title:"Buck Converter",desc:"Duty cycle, switching, and output ripple from first principles.",tags:["theory","sim"]},
+    {title:"PFC Fundamentals",desc:"CCM boost PFC and dual-loop control.",tags:["theory"]},
+    {title:"Flyback Converter",desc:"Transformer isolation, leakage energy, and snubber design.",tags:["theory"]},
+    {title:"Power Electronics Interview",desc:"PFC, LLC, PMIC — key concepts and worked problems.",tags:["interview"]},
+  ]},
+  { name:"Control Systems", accent:"#67e8c8", topics:[
+    {title:"Bode Plot Explorer",desc:"Drag poles and zeros; watch magnitude and phase respond live.",tags:["viz","sim"]},
+    {title:"Laplace Pole-Zero",desc:"Place poles and zeros on the s-plane, see the time response.",tags:["viz"]},
+    {title:"PID Controller",desc:"Tune Kp, Ki, Kd interactively and watch the step response.",tags:["viz","sim"]},
+    {title:"Stability & Root Locus",desc:"Routh-Hurwitz, Nyquist, and root locus from first principles.",tags:["theory"]},
+    {title:"Stability Judge",desc:"Is this system stable? Identify from pole-zero plots.",tags:["game"]},
+    {title:"Control Systems Interview",desc:"Loop gain, phase margin, delay — classic interview questions.",tags:["interview"]},
+  ]},
+  { name:"Analog Design", accent:"#a78bfa", topics:[
+    {title:"MOSFET IV Curves",desc:"Sweep Vgs and Vds; explore triode, saturation, and cutoff.",tags:["viz"]},
+    {title:"Op-Amp Simulator",desc:"Build inverting, non-inverting, and diff-amp topologies.",tags:["sim"]},
+    {title:"Common-Source Amplifier",desc:"Gain, bandwidth, and noise figure — design interactively.",tags:["sim"]},
+    {title:"Current Mirror Designer",desc:"Size NMOS/PMOS mirrors with cascode options.",tags:["sim"]},
+    {title:"Filter Design",desc:"Butterworth, Chebyshev, Bessel — poles, ripple, group delay.",tags:["theory","sim"]},
+    {title:"Analog Design Interview",desc:"OTA, folded cascode, noise — worked IC design problems.",tags:["interview"]},
+  ]},
+  { name:"Signals & Systems", accent:"#f0c060", topics:[
+    {title:"Fourier Series Explorer",desc:"Add harmonics and watch a waveform build from sinusoids.",tags:["viz"]},
+    {title:"Convolution Demo",desc:"Drag two functions; see their convolution computed live.",tags:["viz"]},
+    {title:"Laplace Transform",desc:"Key transform pairs, region of convergence, and intuition.",tags:["theory"]},
+    {title:"Sampling Theory",desc:"Nyquist criterion, aliasing, and reconstruction visualized.",tags:["viz","theory"]},
+  ]},
+  { name:"VLSI & IC Design", accent:"#f9a8d4", topics:[
+    {title:"CMOS Logic",desc:"NAND, NOR, and complex gates — sizing and noise margins.",tags:["theory"]},
+    {title:"SAR ADC",desc:"Bit-by-bit conversion, CDAC charge redistribution, comparator.",tags:["theory","viz"]},
+    {title:"PLL Fundamentals",desc:"Phase detector, VCO, loop filter — lock range and jitter.",tags:["theory"]},
+    {title:"Layout & DRC/LVS",desc:"Design rules, parasitic extraction, and LVS sign-off.",tags:["theory"]},
+    {title:"RFIC Design",desc:"LNA, mixer, PA specs — P1dB, OIP3, noise figure.",tags:["theory"]},
+    {title:"PMIC",desc:"LDO, switcher, protection circuits — IC-level power design.",tags:["theory"]},
+    {title:"VLSI Interview",desc:"Physical design, timing closure, and signoff — practice problems.",tags:["interview"]},
+  ]},
+  { name:"Digital Design", accent:"#fb923c", topics:[
+    {title:"Verilog Debug",desc:"Fix broken RTL snippets to make a testbench pass.",tags:["game"]},
+    {title:"FSM Design",desc:"Moore vs Mealy, state encoding, and timing diagrams.",tags:["theory","viz"]},
+    {title:"FPGA Fundamentals",desc:"LUTs, routing, constraints, and timing closure.",tags:["theory"]},
+  ]},
+  { name:"Computer Architecture", accent:"#a78bfa", topics:[
+    {title:"Pipeline Hazards",desc:"Data, control, and structural hazards — with forwarding paths.",tags:["theory","viz"]},
+    {title:"Tomasulo & ROB",desc:"Out-of-order execution, register renaming, and commit.",tags:["theory"]},
+    {title:"Branch Prediction",desc:"Bimodal, tournament, and Yeh-Patt predictors compared.",tags:["theory"]},
+    {title:"Cache & Memory",desc:"Hit rate, miss penalty, and memory hierarchy tradeoffs.",tags:["theory"]},
+  ]},
+  { name:"Circuits", accent:"#67e8c8", topics:[
+    {title:"Circuit Challenge",desc:"Build a circuit to hit a target spec — interactive construction.",tags:["game"]},
+    {title:"Op-Amp Feedback",desc:"Inverting, non-inverting, and stability in feedback systems.",tags:["theory","viz"]},
+    {title:"Filter Intuition",desc:"Low-pass, high-pass, band-pass — magnitude and phase response.",tags:["viz"]},
+  ]},
+  { name:"Interview Prep", accent:"#f9a8d4", topics:[
+    {title:"Analog IC Interview",desc:"Folded cascode, OTA, noise, CMRR — full prep.",tags:["interview"]},
+    {title:"Power Electronics Interview",desc:"PFC, LLC, motor drive — key concepts and gotchas.",tags:["interview"]},
+    {title:"Embedded Systems Interview",desc:"RTOS, interrupts, I2C/SPI, power management.",tags:["interview"]},
+    {title:"RTL / Digital Interview",desc:"Verilog coding, CDC, timing, and FPGA constraints.",tags:["interview"]},
+  ]},
+];
+function tagEl(t){const c={viz:'tag-viz',sim:'tag-sim',theory:'tag-theory',game:'tag-game',interview:'tag-interview'},l={viz:'Viz',sim:'Sim',theory:'Theory',game:'Game',interview:'Interview'};return`<span class="card-tag ${c[t]}">${l[t]}</span>`;}
+function renderCards(f,q){
+  const ct=document.getElementById('cards-container');ct.innerHTML='';const sq=q.toLowerCase();
+  SECTIONS.forEach(s=>{
+    const m=s.topics.filter(t=>(f==='all'||t.tags.includes(f))&&(!sq||t.title.toLowerCase().includes(sq)||t.desc.toLowerCase().includes(sq)));
+    if(!m.length)return;
+    const lb=document.createElement('div');lb.className='section-label';lb.textContent=s.name;ct.appendChild(lb);
+    const g=document.createElement('div');g.className='topic-grid';
+    m.forEach(t=>{const c=document.createElement('div');c.className='topic-card';c.style.setProperty('--accent',s.accent);c.innerHTML=`<div class="card-tag-row">${t.tags.map(tagEl).join('')}</div><div class="card-title">${t.title}</div><div class="card-desc">${t.desc}</div><span class="card-arrow">→</span>`;g.appendChild(c);});
+    ct.appendChild(g);
+  });
+  if(!ct.children.length)ct.innerHTML='<div style="color:#5a4e38;font-size:13px;padding:2rem 0;font-family:JetBrains Mono,monospace;">No topics found.</div>';
+}
+let cf='all',cs='';
+document.getElementById('filter-bar').addEventListener('click',e=>{const p=e.target.closest('.pill');if(!p)return;document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));p.classList.add('active');cf=p.dataset.filter;renderCards(cf,cs);});
+document.getElementById('search-input').addEventListener('input',e=>{cs=e.target.value;renderCards(cf,cs);});
+renderCards('all','');
+
+/* ══════════════════════════════════════════════
+   INFINITY LOOP — flat-ribbon, curved centreline
+   The centre path is a figure-8 (lemniscate) lying
+   mostly in the XY plane (the plane facing the camera),
+   but its Z coordinate sweeps through one full smooth
+   wave over the loop — each lobe glides from "far" to
+   "near" through its outer tip, the way a real Möbius
+   strip's centreline naturally bows in and out rather
+   than sitting flat in a single plane. That same wave is
+   what keeps the two passes through the centre crossing
+   safely separated (front vs. back) without ever
+   touching. The ribbon's cross-section is NOT twisted —
+   it stays flat/face-on the whole way round, so the
+   curving reads as smooth 3D depth rather than an
+   edge-on flip.
+   ══════════════════════════════════════════════ */
+
+const canvas3d = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({canvas:canvas3d,antialias:true,alpha:true});
+renderer.setSize(380,240);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setClearColor(0x000000,0);
+
+const scene = new THREE.Scene();
+// Camera sits on +Z looking down -Z — the figure-8 lives in the XY plane,
+// so this is a straight-on front view of the infinity symbol.
+const camera = new THREE.PerspectiveCamera(36,380/240,0.1,100);
+camera.position.set(0,0,9);
+camera.lookAt(0,0,0);
+
+// ── centre-line: lemniscate (figure-8) in the XY plane, with depth ──
+// x = A*sin(t)            sweeps left ↔ right through both lobes
+// y = B*sin(t)*cos(t)     sweeps each lobe up/down (gives the "∞" silhouette)
+// z = -DEPTH*cos(t)       ONE smooth wave over the whole loop: each lobe
+//     glides from far (-DEPTH) to near (+DEPTH) through its own tip,
+//     instead of staying flat. The minus sign puts the t≈π pass (the
+//     strand running from the TOP of the left lobe down to the bottom of
+//     the right lobe) in front at the crossing, matching the reference.
+const A = 3.0, B = 2.4, DEPTH = 1.2;
+function centrePoint(t) {
+  const x = A * Math.sin(t);
+  const y = B * Math.sin(t) * Math.cos(t);
+  const z = -DEPTH * Math.cos(t);
+  return new THREE.Vector3(x, y, z);
+}
+function centreTangent(t) {
+  const dt = 0.0002;
+  const p1 = centrePoint(t - dt);
+  const p2 = centrePoint(t + dt);
+  return p2.sub(p1).normalize();
+}
+
+// ── build the ribbon ──
+const U_SEGS  = 900;   // along the path
+const V_SEGS  = 40;    // across the width
+const HALF_W  = 0.42;  // half-width of the ribbon
+
+const positions = [];
+const uvs       = [];
+const indices   = [];
+const boundaryTop    = []; // v = +HALF_W edge — used for the clean rim outline
+const boundaryBottom = []; // v = -HALF_W edge
+
+// Fixed reference axis pointing at the camera. Crossing it with the path's
+// tangent gives the ribbon's WIDTH direction lying flat in the screen
+// plane (so we see the broad face of the band, not its edge), while the
+// remaining perpendicular direction becomes the surface/face normal that
+// points roughly toward the camera — exactly what catches light like a
+// polished band rather than a flat cut-out.
+const VIEW_AXIS = new THREE.Vector3(0,0,1);
+
+for (let i = 0; i <= U_SEGS; i++) {
+  const t = (i / U_SEGS) * Math.PI * 2;
+
+  const P    = centrePoint(t);
+  const tang = centreTangent(t);
+
+  // No extra twist applied — norm stays exactly as computed, so the
+  // ribbon's width direction is always flat in the screen plane and the
+  // band never rotates edge-on, even while passing through the crossing.
+  let norm = new THREE.Vector3().crossVectors(VIEW_AXIS, tang);
+  if (norm.lengthSq() < 1e-6) norm.set(1,0,0); else norm.normalize();
+
+  for (let j = 0; j <= V_SEGS; j++) {
+    const v   = (j / V_SEGS - 0.5) * 2 * HALF_W;   // −HALF_W … +HALF_W
+    const pos = P.clone().add(norm.clone().multiplyScalar(v));
+
+    positions.push(pos.x, pos.y, pos.z);
+    uvs.push(i / U_SEGS, j / V_SEGS);
+
+    if (j === 0)      boundaryBottom.push(pos.x, pos.y, pos.z);
+    if (j === V_SEGS) boundaryTop.push(pos.x, pos.y, pos.z);
+  }
+}
+
+for (let i = 0; i < U_SEGS; i++) {
+  for (let j = 0; j < V_SEGS; j++) {
+    const a = i*(V_SEGS+1)+j;
+    const b = a+1;
+    const c = (i+1)*(V_SEGS+1)+j;
+    const d = c+1;
+    indices.push(a,b,c, b,d,c);
+  }
+}
+
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+geo.setAttribute('uv',       new THREE.Float32BufferAttribute(uvs,2));
+geo.setIndex(indices);
+geo.computeVertexNormals();
+
+// ── polished gold material ──
+// MeshPhysicalMaterial's clearcoat layer + a metalness of 1 is what reads as
+// "real metal" rather than plastic — flat MeshPhong specular alone can't do
+// that. There's no environment map here, so several differently-tinted
+// lights (below) stand in for the varied reflections a true env map would
+// give, which is what actually sells the "shining gold" look as it rotates.
+const mat = new THREE.MeshPhysicalMaterial({
+  color:             0xd9a634,
+  metalness:         1.0,
+  roughness:         0.3,
+  clearcoat:         0.55,
+  clearcoatRoughness:0.2,
+  reflectivity:      1.0,
+  emissive:          0x2b1700,
+  emissiveIntensity: 0.35,
+  side: THREE.DoubleSide,
+});
+const mesh = new THREE.Mesh(geo, mat);
+scene.add(mesh);
+
+// ── clean gold rim outline along the two true edges of the band ──
+// (built straight from the actual boundary vertices, so it always lines
+// up perfectly with the surface — no separate/duplicated geometry to drift)
+function makeRim(arr) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(arr,3));
+  const m = new THREE.LineBasicMaterial({
+    color: 0xfff3cf,
+    transparent: true,
+    opacity: 0.85,
+    blending: THREE.AdditiveBlending,
+  });
+  return new THREE.Line(g,m);
+}
+const rimTop    = makeRim(boundaryTop);
+const rimBottom = makeRim(boundaryBottom);
+scene.add(rimTop, rimBottom);
+
+// ── lighting ──
+// A hemisphere light (instead of flat ambient) gives a warm-top/dark-bottom
+// gradient like a studio backdrop. A cool-tinted light opposite the warm
+// key light is what makes gold look like gold rather than yellow plastic —
+// real metal picks up contrasting colour casts from its surroundings.
+const hemi = new THREE.HemisphereLight(0xfff0c8, 0x1b0f02, 1.1);
+const key  = new THREE.DirectionalLight(0xffffff, 3.0);  key.position.set(6,9,8);
+const cool = new THREE.DirectionalLight(0xbcd6ff, 1.0);  cool.position.set(-7,2,5);
+const rimL = new THREE.DirectionalLight(0xffdf9e, 1.7);  rimL.position.set(-2,-7,-6);
+const spec = new THREE.PointLight(0xffffff, 1.4, 60);    spec.position.set(0,1,10);
+
+scene.add(hemi, key, cool, rimL, spec);
+scene.add(new THREE.AmbientLight(0x1b0f02, 0.5));
+
+// ── interaction ──
+let isDragging=false,lastX=0,lastY=0,velX=0,velY=0,dragEndTime=0;
+let rotX=0, rotY=0;   // start flat-on, no tilt
+const RESUME_DELAY=1200, AUTO_SPEED=0.0028;
+
+canvas3d.addEventListener('mousedown',e=>{isDragging=true;lastX=e.clientX;lastY=e.clientY;velX=0;velY=0;});
+window.addEventListener('mouseup',()=>{if(isDragging){isDragging=false;dragEndTime=performance.now();}});
+window.addEventListener('mousemove',e=>{
+  if(!isDragging)return;
+  velX=(e.clientY-lastY)*0.009; velY=(e.clientX-lastX)*0.009;
+  rotX+=velX; rotY+=velY; lastX=e.clientX; lastY=e.clientY;
+});
+canvas3d.addEventListener('touchstart',e=>{isDragging=true;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;velX=0;velY=0;},{passive:true});
+canvas3d.addEventListener('touchend',()=>{if(isDragging){isDragging=false;dragEndTime=performance.now();}});
+canvas3d.addEventListener('touchmove',e=>{
+  if(!isDragging)return;
+  velX=(e.touches[0].clientY-lastY)*0.009; velY=(e.touches[0].clientX-lastX)*0.009;
+  rotX+=velX; rotY+=velY; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
+},{passive:true});
+
+let animating=true;
+const pivot=new THREE.Group();
+pivot.add(mesh);
+pivot.add(rimTop);
+pivot.add(rimBottom);
+scene.add(pivot);
+
+function animate(){
+  if(!animating)return;
+  requestAnimationFrame(animate);
+  const now=performance.now(), dt=now-dragEndTime;
+  if(isDragging){
+    // drag deltas already applied in mousemove
+  } else if(dt<RESUME_DELAY){
+    velX*=0.91; velY*=0.91; rotX+=velX; rotY+=velY;
+  } else {
+    const blend=Math.min((dt-RESUME_DELAY)/800,1);
+    velX*=0.91; velY*=0.91; rotX+=velX; rotY+=velY+AUTO_SPEED*blend;
+  }
+  pivot.rotation.x = rotX;
+  pivot.rotation.y = rotY;
+  renderer.render(scene,camera);
+}
+animate();
+
+document.getElementById('enter-btn').addEventListener('click',()=>{
+  document.getElementById('intro').classList.add('exit');
+  document.getElementById('main').classList.add('visible');
+  setTimeout(()=>{animating=false;},1200);
+});
+</script>
