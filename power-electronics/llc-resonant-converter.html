@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLC Resonant Converters · The Lecture Hall</title>
+  <meta name="description" content="LLC resonant converter fundamentals with operating regions, ZVS, tank design, and waveforms." />
+  <link rel="stylesheet" href="../assets/css/lecturehall.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="lh-page">
+  <div class="page-shell">
+    <nav class="site-nav" aria-label="Main navigation">
+      <div>
+        <a class="nav-brand" href="../index.html">The <span>Lecture</span> Hall</a>
+        <div class="nav-sub">Power Electronics · LLC Resonant Converters</div>
+      </div>
+      <div class="nav-links">
+        <a href="../index.html">Index</a>
+        <a href="index.html">Power Electronics</a>
+        <a href="pfc.html">PFC</a>
+        <a href="llc-resonant-converter.html" class="active">LLC</a>
+      </div>
+    </nav>
+
+    <div class="breadcrumbs"><a href="../index.html">Index</a><span>/</span><a href="index.html">Power Electronics</a><span>/</span><span>LLC Resonant Converters</span></div>
+
+    <header class="topic-header">
+      <div class="kicker">LLC Resonant Converter</div>
+      <h1>Use resonance to switch <span>softly</span>.</h1>
+      <p>After the PFC stage creates a high-voltage DC bus, the downstream converter still has a hard job: isolate, step down, regulate, and stay efficient. The LLC resonant converter solves this by letting the tank current do useful timing work, enabling zero-voltage switching over a wide operating range.</p>
+      <div class="topic-meta"><span>Lr</span><span>Cr</span><span>Lm</span><span>ZVS</span><span>Region 1 / Region 2</span><span>48 V front-end example</span></div>
+    </header>
+
+    <section class="content-section" id="why-resonant">
+      <h2>Why resonant conversion?</h2>
+      <div class="content-card">
+        <p>Hard-switched PWM converters spend part of each transition with both voltage and current present in the switch. That loss limits switching frequency and power density. A resonant converter reshapes voltage and current waveforms so switching events happen under friendlier conditions.</p>
+        <p>The LLC tank is especially useful because it can provide ZVS turn-on for MOSFETs and naturally reduce reverse-recovery stress on the secondary rectifiers. That is why LLC converters show up so often after a PFC front end in adapters, server supplies, TV power boards, and telecom supplies.</p>
+      </div>
+    </section>
+
+    <section class="content-section" id="tank">
+      <h2>The LLC tank</h2>
+      <div class="content-card">
+        <p>The tank contains a series resonant inductor \(L_r\), series resonant capacitor \(C_r\), and magnetizing inductance \(L_m\). The key difference from a simple series resonant converter is that \(L_m\) can act as both a passive load and a second resonant participant depending on the switching frequency, load, and interval within the switching cycle.</p>
+        <p>There are two important resonant frequencies:</p>
+        <div class="equation-box">\[
+          f_{r1} = \frac{1}{2\pi\sqrt{L_r C_r}} \qquad
+          f_{r2} = \frac{1}{2\pi\sqrt{(L_m + L_r) C_r}}
+        \]</div>
+        <p>Designers often place the normal high-line operating point near \(f_{r1}\), where the tank gain is near unity and circulating energy is controlled. When input voltage drops, the controller reduces switching frequency to get more voltage gain.</p>
+      </div>
+    </section>
+
+    <section class="content-section" id="operating-regions">
+      <h2>Operating regions</h2>
+      <div class="interactive-panel">
+        <div class="interactive-title"><strong>Interactive: LLC operating modes</strong><span>region 1, region 2, waveforms, and ZVS clues</span></div>
+        <iframe class="interactive-frame frame-xl" src="../interactives/llc_rc_operating_modes.html" title="LLC resonant converter operating modes" loading="lazy"></iframe>
+      </div>
+
+      <table class="comparison-table">
+        <thead>
+          <tr><th>Region</th><th>Frequency range</th><th>What the tank is doing</th><th>Why it matters</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Region 1</strong></td>
+            <td>\( f_{sw} > f_{r1} \)</td>
+            <td>Looks similar to a series resonant converter. \(L_m\) is clamped by reflected output voltage and acts like a passive load.</td>
+            <td>ZVS can be maintained, and no-load regulation is easier than a pure SRC because \(L_m\) gives the tank a load path.</td>
+          </tr>
+          <tr>
+            <td><strong>Region 2</strong></td>
+            <td>\( f_{r2} < f_{sw} < f_{r1} \)</td>
+            <td>First \(L_r\) resonates with \(C_r\); after secondary current falls to zero, \(L_m\) joins the resonance with \(L_r\) and \(C_r\).</td>
+            <td>This is the special LLC region: gain can rise below \(f_{r1}\) while the tank remains inductive enough for ZVS.</td>
+          </tr>
+          <tr>
+            <td><strong>Region 3</strong></td>
+            <td>Very low \( f_{sw} \), below the useful ZVS range</td>
+            <td>The tank behavior becomes capacitive / ZCS-like.</td>
+            <td>Avoid it for MOSFET converters because turn-on can become lossy and stressful.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="content-section" id="region2-sequence">
+      <h2>Region 2 sequence</h2>
+      <div class="content-card">
+        <p>Region 2 is the mode worth slowing down for. In one half-cycle, the transition can be understood as three intervals:</p>
+        <ol>
+          <li><strong>Mode 1:</strong> one MOSFET has just turned off; resonant current is negative and flows through the opposite body diode, preparing ZVS before the gate is applied.</li>
+          <li><strong>Mode 2:</strong> the MOSFET conducts; the secondary rectifier conducts; \(L_m\) is clamped by reflected output voltage; \(L_r\) and \(C_r\) dominate the resonance.</li>
+          <li><strong>Mode 3:</strong> \(I_{Lr}\) meets \(I_{Lm}\), output current reaches zero, the secondary disconnects, and \(L_m\) joins \(L_r\) in resonance with \(C_r\).</li>
+        </ol>
+        <div class="note">The magnetizing current is not just a penalty. It is the tool that discharges switch capacitances and creates ZVS, even at very light load. But too much magnetizing current increases circulating RMS current, so \(L_m/L_r\) is a core design tradeoff.</div>
+      </div>
+    </section>
+
+    <section class="content-section" id="design-flow">
+      <h2>Design flow</h2>
+      <div class="two-col">
+        <div class="content-card">
+          <h3>1. Choose the transformer ratio</h3>
+          <p>At the nominal high-line bus, choose the turns ratio so the converter operates close to unity gain around \(f_{r1}\). For a half-bridge LLC:</p>
+          <div class="equation-box">\[ n \approx \frac{V_{in}}{2V_o} \]</div>
+        </div>
+        <div class="content-card">
+          <h3>2. Choose \(f_{r1}\)</h3>
+          <p>Pick the nominal series resonance based on target switching frequency, magnetic size, device losses, and controller range. Higher frequency shrinks magnetics but increases AC winding loss and layout sensitivity.</p>
+        </div>
+        <div class="content-card">
+          <h3>3. Choose \(L_m/L_r\)</h3>
+          <p>A smaller \(L_m\) helps narrow frequency range and support ZVS, but raises magnetizing current. A larger \(L_m\) reduces circulating current but may demand wider frequency range or reduce ZVS margin.</p>
+        </div>
+        <div class="content-card">
+          <h3>4. Check gain, current, and stress</h3>
+          <p>Verify worst-case low-line gain, light-load behavior, resonant capacitor RMS current and voltage, switch turn-off current, rectifier stress, and transformer thermal limits.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section" id="worked-example">
+      <h2>Worked example: first turns-ratio estimate</h2>
+      <div class="content-card">
+        <p><strong>Problem.</strong> Estimate the transformer turns ratio for a half-bridge LLC that converts a 400 V DC bus to 48 V near unity gain.</p>
+        <div class="equation-box">\[ n \approx \frac{V_{in}}{2V_o} = \frac{400}{2\cdot48} = 4.17 \]</div>
+        <p><strong>Takeaway.</strong> A practical first-pass ratio is near 4:1. The exact selection still depends on rectifier drops, control range, magnetics, and allowed gain at low-line operation.</p>
+      </div>
+    </section>
+
+    <section class="content-section" id="design-tradeoffs">
+      <h2>Design tradeoffs</h2>
+      <table class="comparison-table">
+        <thead><tr><th>Knob</th><th>Increasing it tends to help</th><th>But it can hurt</th></tr></thead>
+        <tbody>
+          <tr><td>Switching frequency</td><td>Magnetics and output capacitors can shrink.</td><td>AC winding loss, gate loss, layout sensitivity, and control timing get harder.</td></tr>
+          <tr><td>\(L_m\)</td><td>Lower magnetizing RMS current and lower circulating loss.</td><td>Less ZVS energy and wider frequency swing may be needed.</td></tr>
+          <tr><td>\(C_r\)</td><td>Lower resonant capacitor voltage stress.</td><td>Lower tank impedance can worsen short-circuit current and RMS current.</td></tr>
+          <tr><td>Operation near \(f_{r1}\)</td><td>High efficiency and moderate circulating energy.</td><td>May not provide enough gain at low line unless tank ratios are chosen well.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="content-section" id="further-reading">
+      <h2>Further reading</h2>
+      <div class="source-card">
+        Main source for this page: <a href="../resources/llc.pdf">uploaded LLC resonant converter chapter</a>. For the stage before this converter, read <a href="pfc.html">PFC Fundamentals</a> and the <a href="../resources/pfc.pdf">PFC PDF</a>.
+      </div>
+    </section>
+
+    <footer class="footer"><a href="index.html">← Back to Power Electronics</a></footer>
+  </div>
+</body>
+</html>

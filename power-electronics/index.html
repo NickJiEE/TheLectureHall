@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Power Electronics · The Lecture Hall</title>
+  <meta name="description" content="Power Electronics topic hub for PFC, LLC resonant converters, and converter fundamentals." />
+  <link rel="stylesheet" href="../assets/css/lecturehall.css" />
+</head>
+<body class="lh-page">
+  <div class="page-shell">
+    <nav class="site-nav" aria-label="Main navigation">
+      <div>
+        <a class="nav-brand" href="../index.html">The <span>Lecture</span> Hall</a>
+        <div class="nav-sub">Power Electronics · Concept Map</div>
+      </div>
+      <div class="nav-links">
+        <a href="../index.html">Index</a>
+        <a href="index.html" class="active">Power Electronics</a>
+        <a href="pfc.html">PFC</a>
+        <a href="llc-resonant-converter.html">LLC</a>
+      </div>
+    </nav>
+
+    <section class="hero" aria-labelledby="pe-title">
+      <div>
+        <div class="kicker">Section · Power Electronics</div>
+        <h1 id="pe-title">Converters that shape <span>energy</span>.</h1>
+        <p>Power electronics is where circuit theory, controls, magnetics, devices, thermal limits, EMI, and real-world standards all collide. This section starts with the AC/DC front end: power factor correction and the LLC resonant converter that usually follows it.</p>
+        <p><a class="lh-button" href="pfc.html">Start with PFC →</a> <a class="lh-button secondary" href="llc-resonant-converter.html">Jump to LLC</a></p>
+      </div>
+      <aside class="hero-panel" aria-label="Power electronics roadmap">
+        <div class="hero-stat"><strong>AC input</strong><span>PF, THD, EMI, safety</span></div>
+        <div class="hero-stat"><strong>PFC stage</strong><span>Boost converter shapes current</span></div>
+        <div class="hero-stat"><strong>DC bus</strong><span>~380–400 V for universal AC</span></div>
+        <div class="hero-stat"><strong>Isolated DC/DC</strong><span>LLC provides efficient conversion</span></div>
+      </aside>
+    </section>
+
+    <section class="content-section">
+      <h2>New guided topics</h2>
+      <div class="card-grid">
+        <a class="module-card" style="--accent:#f0c060" href="pfc.html">
+          <div class="card-tag-row"><span class="card-tag tag-theory">Theory</span><span class="card-tag tag-viz">Viz</span></div>
+          <div class="card-title">PFC Fundamentals</div>
+          <div class="card-desc">A guided lesson on power factor, harmonic distortion, why boost PFC dominates, and when CrCM, CCM, or interleaving makes sense.</div>
+          <span class="card-arrow">→</span>
+        </a>
+        <a class="module-card" style="--accent:#67e8c8" href="llc-resonant-converter.html">
+          <div class="card-tag-row"><span class="card-tag tag-theory">Theory</span><span class="card-tag tag-viz">Viz</span></div>
+          <div class="card-title">LLC Resonant Converters</div>
+          <div class="card-desc">A guided lesson on the LLC tank, two resonant frequencies, ZVS/ZCS regions, and design tradeoffs after the PFC bus.</div>
+          <span class="card-arrow">→</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Interactive lab bench</h2>
+      <div class="card-grid">
+        <a class="module-card" style="--accent:#f0c060" href="../interactives/power_factor_visualizer.html">
+          <div class="card-tag-row"><span class="card-tag tag-viz">Viz</span></div>
+          <div class="card-title">Power Factor Visualizer</div>
+          <div class="card-desc">Adjust power factor and see voltage, current, and instantaneous power change in real time.</div>
+          <span class="card-arrow">→</span>
+        </a>
+        <a class="module-card" style="--accent:#f0c060" href="../interactives/beer_pf_analogy.html">
+          <div class="card-tag-row"><span class="card-tag tag-viz">Viz</span></div>
+          <div class="card-title">Beer Glass PF Analogy</div>
+          <div class="card-desc">Map real, reactive, and apparent power to beer, foam, and glass size.</div>
+          <span class="card-arrow">→</span>
+        </a>
+        <a class="module-card" style="--accent:#67e8c8" href="../interactives/boost_inductor_position_advantage.html">
+          <div class="card-tag-row"><span class="card-tag tag-viz">Viz</span></div>
+          <div class="card-title">Boost Inductor Position</div>
+          <div class="card-desc">Compare input-side and output-side inductors, and see why boost PFC is naturally current-shaping friendly.</div>
+          <span class="card-arrow">→</span>
+        </a>
+        <a class="module-card" style="--accent:#67e8c8" href="../interactives/llc_rc_operating_modes.html">
+          <div class="card-tag-row"><span class="card-tag tag-viz">Viz</span></div>
+          <div class="card-title">LLC Operating Modes</div>
+          <div class="card-desc">Explore region 1, region 2, and the waveform clues that reveal ZVS operation.</div>
+          <span class="card-arrow">→</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="content-section" id="learning-sequence">
+      <h2>Suggested learning sequence</h2>
+      <div class="content-card">
+        <ol>
+          <li><strong>Power factor:</strong> understand why the grid cares about both phase displacement and harmonic distortion.</li>
+          <li><strong>Boost PFC:</strong> see why placing the inductor at the input gives the controller a smooth current to shape.</li>
+          <li><strong>CrCM vs CCM:</strong> compare simple valley-switched control against fixed-frequency average current mode.</li>
+          <li><strong>DC bus:</strong> understand why the PFC output is usually above the highest rectified AC peak.</li>
+          <li><strong>LLC converter:</strong> use resonance and magnetizing current to reduce switching loss in the downstream isolated stage.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="content-section" id="future-topics">
+      <h2>Placeholders for the rest of the section</h2>
+      <div class="card-grid">
+        <div class="module-card" id="buck-converters" style="--accent:#a78bfa">
+          <div class="card-tag-row"><span class="card-tag tag-theory">Theory</span><span class="card-tag tag-sim">Sim</span></div>
+          <div class="card-title">Buck Converters</div>
+          <div class="card-desc">Duty ratio, inductor ripple, capacitor ripple, continuous vs discontinuous conduction, and compensation.</div>
+        </div>
+        <div class="module-card" style="--accent:#a78bfa">
+          <div class="card-tag-row"><span class="card-tag tag-theory">Theory</span></div>
+          <div class="card-title">Boost Converters</div>
+          <div class="card-desc">Energy transfer paths, diode/MOSFET stress, input current behavior, and boost-derived topologies.</div>
+        </div>
+        <div class="module-card" id="flyback-converters" style="--accent:#fb923c">
+          <div class="card-tag-row"><span class="card-tag tag-theory">Theory</span></div>
+          <div class="card-title">Flyback Converters</div>
+          <div class="card-desc">Isolation, reflected voltage, leakage inductance, clamp/snubber choices, and transformer design.</div>
+        </div>
+        <div class="module-card" id="interview-prep" style="--accent:#f9a8d4">
+          <div class="card-tag-row"><span class="card-tag tag-interview">Interview</span></div>
+          <div class="card-title">Power Electronics Interview Prep</div>
+          <div class="card-desc">Common question archetypes: converter waveforms, device stress, magnetics, PFC, LLC, and compensation.</div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      Sources included in this bundle: <a href="../resources/pfc.pdf">PFC PDF</a>, <a href="../resources/llc.pdf">LLC PDF</a>, and the project <a href="../resources/README.md">README</a>.
+    </footer>
+  </div>
+</body>
+</html>

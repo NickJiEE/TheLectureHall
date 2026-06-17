@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PFC Fundamentals · The Lecture Hall</title>
+  <meta name="description" content="Power factor correction fundamentals with interactives for PF, boost PFC, CrCM, CCM, and EMI intuition." />
+  <link rel="stylesheet" href="../assets/css/lecturehall.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="lh-page">
+  <div class="page-shell">
+    <nav class="site-nav" aria-label="Main navigation">
+      <div>
+        <a class="nav-brand" href="../index.html">The <span>Lecture</span> Hall</a>
+        <div class="nav-sub">Power Electronics · PFC Fundamentals</div>
+      </div>
+      <div class="nav-links">
+        <a href="../index.html">Index</a>
+        <a href="index.html">Power Electronics</a>
+        <a href="pfc.html" class="active">PFC</a>
+        <a href="llc-resonant-converter.html">LLC</a>
+      </div>
+    </nav>
+
+    <div class="breadcrumbs"><a href="../index.html">Index</a><span>/</span><a href="index.html">Power Electronics</a><span>/</span><span>PFC Fundamentals</span></div>
+
+    <header class="topic-header">
+      <div class="kicker">Power Factor Correction</div>
+      <h1>Make the power supply look like a <span>resistor</span>.</h1>
+      <p>Power factor correction is the front-end discipline of drawing useful AC-grid current: sinusoidal, low-harmonic, and aligned with the line voltage. The big idea is simple: the load should not demand giant current pulses or reactive circulation just to deliver real power.</p>
+      <div class="topic-meta">
+        <span>AC/DC front end</span><span>Boost PFC</span><span>THD</span><span>CrCM / CCM</span><span>EMI</span>
+      </div>
+    </header>
+
+    <section class="content-section" id="intuition">
+      <h2>Intuition</h2>
+      <div class="content-card">
+        <p>Real power is the part that becomes useful work or heat in the load. Apparent power is what the grid, wiring, breakers, and semiconductors must carry. Power factor is the ratio between the two:</p>
+        <div class="equation-box">\[ PF = \frac{P}{S} = \frac{\text{real power}}{\text{apparent power}} \]</div>
+        <p>A poor power factor means more RMS current for the same delivered watts. For a 60 W adapter on 115 VAC, ideal PF draws about 0.52 A RMS; at PF = 0.4, it draws about 1.3 A RMS for the same real power.</p>
+      </div>
+
+      <div class="interactive-panel">
+        <div class="interactive-title"><strong>Interactive: beer glass analogy</strong><span>P, Q, S as an intuition map</span></div>
+        <iframe class="interactive-frame frame-sm" src="../interactives/beer_pf_analogy.html" title="Beer glass analogy for power factor" loading="lazy"></iframe>
+      </div>
+
+      <div class="interactive-panel">
+        <div class="interactive-title"><strong>Interactive: phase and instantaneous power</strong><span>drag PF down and watch current rise</span></div>
+        <iframe class="interactive-frame frame-md" src="../interactives/power_factor_visualizer.html" title="Power factor waveform visualizer" loading="lazy"></iframe>
+      </div>
+    </section>
+
+    <section class="content-section" id="distortion">
+      <h2>Why AC/DC inputs distort current</h2>
+      <div class="content-card">
+        <p>A simple diode bridge plus bulk capacitor does not draw current smoothly through the entire line cycle. The bridge conducts mostly when the rectified line voltage rises above the capacitor voltage plus diode drops. That creates narrow recharge pulses instead of a clean sine current.</p>
+        <p>Those current pulses contain harmonics. Total harmonic distortion describes how much current exists outside the fundamental line-frequency component:</p>
+        <div class="equation-box">\[ THD = \frac{\sqrt{\sum_{n=2}^{\infty} I_n^2}}{I_1} \]</div>
+        <p>With sinusoidal voltage, power factor is hurt by both phase displacement and harmonic distortion. A useful compact relation is:</p>
+        <div class="equation-box">\[ PF \approx \frac{\cos\phi}{\sqrt{1 + THD^2}} \]</div>
+        <div class="note">Design intuition: displacement PF asks “is the current sine delayed?” Distortion PF asks “is the current even a sine?” PFC has to address both.</div>
+      </div>
+    </section>
+
+    <section class="content-section" id="pfc-stage">
+      <h2>The PFC stage</h2>
+      <div class="content-card">
+        <p>A PFC converter is inserted between the rectifier and the downstream DC/DC converter. Passive PFC adds line-frequency inductance, which is simple but bulky and limited over universal input. Active PFC uses a full switching converter and control loop to shape input current over a wide line range.</p>
+        <p>The most common active PFC topology is the boost converter. One reason is physical: the boost inductor is on the input side, so the source sees inductor current instead of a hard-switched MOSFET current step.</p>
+      </div>
+
+      <div class="interactive-panel">
+        <div class="interactive-title"><strong>Interactive: why the boost inductor position matters</strong><span>continuous input current is the control handle</span></div>
+        <iframe class="interactive-frame frame-lg" src="../interactives/boost_inductor_position_advantage.html" title="Boost inductor position advantage" loading="lazy"></iframe>
+      </div>
+
+      <div class="content-card">
+        <h3>Boost PFC power path</h3>
+        <p>During MOSFET on-time, the inductor current rises with approximately \( V_{IN}/L \) while the output capacitor feeds the load. During MOSFET off-time, the inductor delivers energy through the boost diode to the output. Because boost only steps up, a universal single-phase PFC bus is usually regulated above the highest expected AC peak, commonly around the 380–400 V range.</p>
+      </div>
+    </section>
+
+    <section class="content-section" id="control-modes">
+      <h2>Control modes: CrCM, CCM, and interleaving</h2>
+      <table class="comparison-table">
+        <thead>
+          <tr><th>Mode</th><th>How it controls current</th><th>Best intuition</th><th>Typical use</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>CrCM / TM</strong></td>
+            <td>Constant or modulated on-time; next cycle starts when inductor current reaches zero or a valley.</td>
+            <td>Simple, valley-switched, no boost-diode reverse recovery, but very high ripple and high peak current.</td>
+            <td>Often attractive below a few hundred watts.</td>
+          </tr>
+          <tr>
+            <td><strong>CCM</strong></td>
+            <td>Fixed switching frequency with average current-mode control; duty cycle tracks a sinusoidal current reference.</td>
+            <td>Lower ripple and peak current, better THD at higher power, but hard switching and diode recovery matter.</td>
+            <td>Common above a few hundred watts into kW-class designs.</td>
+          </tr>
+          <tr>
+            <td><strong>Interleaved PFC</strong></td>
+            <td>Two or more boost phases switch out of phase.</td>
+            <td>Each phase still has ripple, but the input sees partial cancellation and lower per-phase RMS stress.</td>
+            <td>Useful for higher power, lower profile, smaller EMI filter, and improved thermal spreading.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">The practical design choice is not “which mode is best?” It is “which loss mechanism is hardest in this product: switching loss, conduction loss, EMI filtering, height, cost, or control complexity?”</div>
+    </section>
+
+    <section class="content-section" id="worked-example">
+      <h2>Worked example: same watts, different PF</h2>
+      <div class="content-card">
+        <p><strong>Problem.</strong> A 60 W adapter operates from 115 VAC. Compare RMS input current at PF = 1.0 and PF = 0.4.</p>
+        <div class="equation-box">\[ I_{RMS} = \frac{P}{V_{RMS} \cdot PF} \]</div>
+        <p><strong>Ideal PF:</strong> \( I = 60/(115 \cdot 1.0) = 0.522\,A \).</p>
+        <p><strong>Poor PF:</strong> \( I = 60/(115 \cdot 0.4) = 1.30\,A \).</p>
+        <p><strong>Takeaway.</strong> The load receives the same 60 W, but the wiring and upstream power system must carry much more current when PF is poor.</p>
+      </div>
+    </section>
+
+    <section class="content-section" id="emi">
+      <h2>EMI lens</h2>
+      <div class="content-card">
+        <p>The boost PFC stage is still a switching converter, so layout and parasitics matter. Differential-mode noise is tied to ripple current flowing line-to-neutral; common-mode noise is tied to high-dv/dt nodes capacitively coupling to earth or chassis. Interleaving can help by canceling input ripple, while bridgeless topologies can improve conduction loss but often make common-mode EMI and current sensing more challenging.</p>
+      </div>
+    </section>
+
+    <section class="content-section" id="further-reading">
+      <h2>Further reading</h2>
+      <div class="source-card">
+        Main source for this page: <a href="../resources/pfc.pdf">Power Factor Correction (PFC) Circuit Basics</a>. Continue next with the <a href="llc-resonant-converter.html">LLC resonant converter</a>, which is a common isolated DC/DC stage after a regulated PFC bus.
+      </div>
+    </section>
+
+    <footer class="footer">
+      <a href="index.html">← Back to Power Electronics</a>
+    </footer>
+  </div>
+</body>
+</html>

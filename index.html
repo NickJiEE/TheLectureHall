@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Lecture Hall · Living EE Textbook</title>
+  <meta name="description" content="The Lecture Hall is an intuition-first, simulation-backed educational platform for Electrical Engineering." />
+  <link rel="stylesheet" href="assets/css/lecturehall.css" />
+</head>
+<body>
+<div id="lh-root">
+  <div id="intro">
+    <canvas id="three-canvas" width="380" height="240" aria-hidden="true"></canvas>
+    <div class="intro-title">The Lecture <span>Hall</span><span class="blink"></span></div>
+    <div class="intro-sub">A living EE textbook</div>
+    <button class="enter-btn" id="enter-btn" type="button">Enter the Hall</button>
+  </div>
+
+  <main id="main" aria-label="The Lecture Hall topic index">
+    <div class="main-inner">
+      <div class="topbar">
+        <div>
+          <div class="logo">The <span>Lecture</span> Hall</div>
+          <div class="logo-sub">EE · Living Textbook · Open Contribution</div>
+        </div>
+        <div class="search-wrap">
+          <input type="text" id="search-input" placeholder="Search topics..." aria-label="Search topics" />
+        </div>
+      </div>
+
+      <section class="hero compact" aria-labelledby="home-title">
+        <div>
+          <div class="kicker">Intuition-first · Simulation-backed</div>
+          <h1 id="home-title">Explore EE like a <span>lab notebook</span>.</h1>
+          <p>The Lecture Hall organizes Electrical Engineering into short concept pages, visualizations, design stories, and worked examples. Start with the new Power Electronics pages, then branch into controls, analog design, signals, digital systems, architecture, VLSI, and communications.</p>
+          <p><a class="lh-button" href="power-electronics/index.html">Open Power Electronics →</a></p>
+        </div>
+      </section>
+
+      <div class="stat-bar" aria-label="Site statistics">
+        <div class="stat-item"><span class="stat-num">9</span><span class="stat-lbl">Sections</span></div>
+        <div class="stat-item"><span class="stat-num">50+</span><span class="stat-lbl">Topics</span></div>
+        <div class="stat-item"><span class="stat-num">4</span><span class="stat-lbl">Visualizations</span></div>
+        <div class="stat-item"><span class="stat-num">∞</span><span class="stat-lbl">Growing</span></div>
+      </div>
+
+      <div class="filter-bar" id="filter-bar" aria-label="Topic filters">
+        <button class="pill all active" data-filter="all" type="button">All</button>
+        <button class="pill" data-filter="viz" type="button">Visualization</button>
+        <button class="pill" data-filter="sim" type="button">Simulator</button>
+        <button class="pill" data-filter="theory" type="button">Theory</button>
+        <button class="pill" data-filter="game" type="button">Mini-game</button>
+        <button class="pill" data-filter="interview" type="button">Interview</button>
+      </div>
+
+      <div id="cards-container"></div>
+
+      <footer class="footer">
+        The Lecture Hall is designed as a static GitHub Pages site. Interactive pieces are self-contained HTML files that can be embedded in topic pages.
+      </footer>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const SECTIONS = [
+  { name:"Power Electronics", accent:"#f0c060", topics:[
+    {title:"Power Electronics Hub",desc:"The guided entry point for converters, PFC, and resonant supplies.",tags:["theory"],url:"power-electronics/index.html"},
+    {title:"PFC Fundamentals",desc:"Power factor, THD, boost PFC, CrCM/CCM tradeoffs, and EMI intuition.",tags:["theory","viz"],url:"power-electronics/pfc.html"},
+    {title:"LLC Resonant Converters",desc:"Two resonant frequencies, ZVS regions, tank design, and operating modes.",tags:["theory","viz"],url:"power-electronics/llc-resonant-converter.html"},
+    {title:"Power Factor Visualizer",desc:"Watch voltage, current, and instantaneous power shift with phase angle.",tags:["viz"],url:"interactives/power_factor_visualizer.html"},
+    {title:"Beer Glass PF Analogy",desc:"Beer = real power, foam = reactive power, glass = apparent power.",tags:["viz"],url:"interactives/beer_pf_analogy.html"},
+    {title:"Boost Inductor Position",desc:"Why boost PFC puts the inductor at the input to tame current distortion.",tags:["viz"],url:"interactives/boost_inductor_position_advantage.html"},
+    {title:"Buck Converter",desc:"Duty cycle, switching, and output ripple from first principles.",tags:["theory","sim"],url:"power-electronics/index.html#buck-converters"},
+    {title:"Flyback Converter",desc:"Transformer isolation, leakage energy, and snubber design.",tags:["theory"],url:"power-electronics/index.html#flyback-converters"},
+    {title:"Power Electronics Interview",desc:"PFC, LLC, PMIC, and converter design gotchas.",tags:["interview"],url:"power-electronics/index.html#interview-prep"}
+  ]},
+  { name:"Control Systems", accent:"#67e8c8", topics:[
+    {title:"Bode Plot Explorer",desc:"Drag poles and zeros; watch magnitude and phase respond live.",tags:["viz","sim"],url:"#"},
+    {title:"Laplace Pole-Zero",desc:"Place poles and zeros on the s-plane, see the time response.",tags:["viz"],url:"#"},
+    {title:"PID Controller",desc:"Tune Kp, Ki, Kd interactively and watch the step response.",tags:["viz","sim"],url:"#"},
+    {title:"Stability & Root Locus",desc:"Routh-Hurwitz, Nyquist, and root locus from first principles.",tags:["theory"],url:"#"},
+    {title:"Stability Judge",desc:"Is this system stable? Identify from pole-zero plots.",tags:["game"],url:"#"},
+    {title:"Control Systems Interview",desc:"Loop gain, phase margin, delay — classic interview questions.",tags:["interview"],url:"#"}
+  ]},
+  { name:"Analog Design", accent:"#a78bfa", topics:[
+    {title:"MOSFET IV Curves",desc:"Sweep VGS and VDS; explore triode, saturation, and cutoff.",tags:["viz"],url:"#"},
+    {title:"Op-Amp Simulator",desc:"Build inverting, non-inverting, and diff-amp topologies.",tags:["sim"],url:"#"},
+    {title:"Common-Source Amplifier",desc:"Gain, bandwidth, and noise figure — design interactively.",tags:["sim"],url:"#"},
+    {title:"Current Mirror Designer",desc:"Size NMOS/PMOS mirrors with cascode options.",tags:["sim"],url:"#"},
+    {title:"Filter Design",desc:"Butterworth, Chebyshev, Bessel — poles, ripple, group delay.",tags:["theory","sim"],url:"#"},
+    {title:"Analog Design Interview",desc:"OTA, folded cascode, noise — worked IC design problems.",tags:["interview"],url:"#"}
+  ]},
+  { name:"Signals & Systems", accent:"#f0c060", topics:[
+    {title:"Fourier Series Explorer",desc:"Add harmonics and watch a waveform build from sinusoids.",tags:["viz"],url:"#"},
+    {title:"Convolution Demo",desc:"Drag two functions; see their convolution computed live.",tags:["viz"],url:"#"},
+    {title:"Laplace Transform",desc:"Key transform pairs, region of convergence, and intuition.",tags:["theory"],url:"#"},
+    {title:"Sampling Theory",desc:"Nyquist criterion, aliasing, and reconstruction visualized.",tags:["viz","theory"],url:"#"}
+  ]},
+  { name:"VLSI & IC Design", accent:"#f9a8d4", topics:[
+    {title:"CMOS Logic",desc:"NAND, NOR, and complex gates — sizing and noise margins.",tags:["theory"],url:"#"},
+    {title:"SAR ADC",desc:"Bit-by-bit conversion, CDAC charge redistribution, comparator.",tags:["theory","viz"],url:"#"},
+    {title:"PLL Fundamentals",desc:"Phase detector, VCO, loop filter — lock range and jitter.",tags:["theory"],url:"#"},
+    {title:"Layout & DRC/LVS",desc:"Design rules, parasitic extraction, and LVS sign-off.",tags:["theory"],url:"#"},
+    {title:"RFIC Design",desc:"LNA, mixer, PA specs — P1dB, OIP3, noise figure.",tags:["theory"],url:"#"},
+    {title:"PMIC",desc:"LDO, switcher, protection circuits — IC-level power design.",tags:["theory"],url:"#"},
+    {title:"VLSI Interview",desc:"Physical design, timing closure, and signoff — practice problems.",tags:["interview"],url:"#"}
+  ]},
+  { name:"Digital Design", accent:"#fb923c", topics:[
+    {title:"Verilog Debug",desc:"Fix broken RTL snippets to make a testbench pass.",tags:["game"],url:"#"},
+    {title:"FSM Design",desc:"Moore vs Mealy, state encoding, and timing diagrams.",tags:["theory","viz"],url:"#"},
+    {title:"FPGA Fundamentals",desc:"LUTs, routing, constraints, and timing closure.",tags:["theory"],url:"#"}
+  ]},
+  { name:"Computer Architecture", accent:"#a78bfa", topics:[
+    {title:"Pipeline Hazards",desc:"Data, control, and structural hazards — with forwarding paths.",tags:["theory","viz"],url:"#"},
+    {title:"Tomasulo & ROB",desc:"Out-of-order execution, register renaming, and commit.",tags:["theory"],url:"#"},
+    {title:"Branch Prediction",desc:"Bimodal, tournament, and Yeh-Patt predictors compared.",tags:["theory"],url:"#"},
+    {title:"Cache & Memory",desc:"Hit rate, miss penalty, and memory hierarchy tradeoffs.",tags:["theory"],url:"#"}
+  ]},
+  { name:"Circuits", accent:"#67e8c8", topics:[
+    {title:"Circuit Challenge",desc:"Build a circuit to hit a target spec — interactive construction.",tags:["game"],url:"#"},
+    {title:"Op-Amp Feedback",desc:"Inverting, non-inverting, and stability in feedback systems.",tags:["theory","viz"],url:"#"},
+    {title:"Filter Intuition",desc:"Low-pass, high-pass, band-pass — magnitude and phase response.",tags:["viz"],url:"#"}
+  ]},
+  { name:"Interview Prep", accent:"#f9a8d4", topics:[
+    {title:"Analog IC Interview",desc:"Folded cascode, OTA, noise, CMRR — full prep.",tags:["interview"],url:"#"},
+    {title:"Power Electronics Interview",desc:"PFC, LLC, motor drive — key concepts and gotchas.",tags:["interview"],url:"power-electronics/index.html#interview-prep"},
+    {title:"Embedded Systems Interview",desc:"RTOS, interrupts, I2C/SPI, power management.",tags:["interview"],url:"#"},
+    {title:"RTL / Digital Interview",desc:"Verilog coding, CDC, timing, and FPGA constraints.",tags:["interview"],url:"#"}
+  ]}
+];
+function tagEl(t){const c={viz:'tag-viz',sim:'tag-sim',theory:'tag-theory',game:'tag-game',interview:'tag-interview'},l={viz:'Viz',sim:'Sim',theory:'Theory',game:'Game',interview:'Interview'};return `<span class="card-tag ${c[t]}">${l[t]}</span>`;}
+function renderCards(filter, query){
+  const ct=document.getElementById('cards-container');
+  ct.innerHTML='';
+  const sq=(query||'').trim().toLowerCase();
+  SECTIONS.forEach(section=>{
+    const matches=section.topics.filter(t=>(filter==='all'||t.tags.includes(filter))&&(!sq||t.title.toLowerCase().includes(sq)||t.desc.toLowerCase().includes(sq)||section.name.toLowerCase().includes(sq)));
+    if(!matches.length)return;
+    const label=document.createElement('div');
+    label.className='section-label';
+    label.textContent=section.name;
+    ct.appendChild(label);
+    const grid=document.createElement('div');
+    grid.className='topic-grid';
+    matches.forEach(t=>{
+      const card=document.createElement('a');
+      card.className='topic-card';
+      card.href=t.url || '#';
+      card.style.setProperty('--accent',section.accent);
+      card.innerHTML=`<div class="card-tag-row">${t.tags.map(tagEl).join('')}</div><div class="card-title">${t.title}</div><div class="card-desc">${t.desc}</div><span class="card-arrow">→</span>`;
+      grid.appendChild(card);
+    });
+    ct.appendChild(grid);
+  });
+  if(!ct.children.length)ct.innerHTML='<div style="color:#5a4e38;font-size:13px;padding:2rem 0;font-family:var(--font-mono);">No topics found.</div>';
+}
+let currentFilter='all', currentSearch='';
+document.getElementById('filter-bar').addEventListener('click',e=>{
+  const pill=e.target.closest('.pill');
+  if(!pill)return;
+  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+  pill.classList.add('active');
+  currentFilter=pill.dataset.filter;
+  renderCards(currentFilter,currentSearch);
+});
+document.getElementById('search-input').addEventListener('input',e=>{
+  currentSearch=e.target.value;
+  renderCards(currentFilter,currentSearch);
+});
+renderCards('all','');
+
+function enterHall(){
+  document.getElementById('intro').classList.add('exit');
+  document.getElementById('main').classList.add('visible');
+  document.body.classList.add('hall-entered');
+  setTimeout(()=>{ stopIntroAnimation = true; }, 1200);
+}
+document.getElementById('enter-btn').addEventListener('click', enterHall);
+
+let stopIntroAnimation = false;
+(function initIntroCanvas(){
+  const canvas = document.getElementById('three-canvas');
+  if(!canvas || !window.THREE){
+    const ctx = canvas && canvas.getContext('2d');
+    if(ctx){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.strokeStyle = '#f0c060'; ctx.lineWidth = 16; ctx.lineCap = 'round';
+      ctx.shadowColor = 'rgba(240,192,96,.7)'; ctx.shadowBlur = 18;
+      ctx.beginPath();
+      for(let i=0;i<=360;i++){
+        const t=i*Math.PI/180;
+        const x=190+115*Math.sin(t);
+        const y=120+70*Math.sin(t)*Math.cos(t);
+        if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    return;
+  }
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setSize(380,240);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setClearColor(0x000000,0);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(36,380/240,0.1,100);
+  camera.position.set(0,0,9); camera.lookAt(0,0,0);
+  const A=3.0, B=2.4, DEPTH=1.2, U=520, V=26, W=.42;
+  function point(t){return new THREE.Vector3(A*Math.sin(t), B*Math.sin(t)*Math.cos(t), -DEPTH*Math.cos(t));}
+  function tangent(t){const d=.0004;return point(t+d).sub(point(t-d)).normalize();}
+  const pos=[], uv=[], idx=[], top=[], bottom=[];
+  const viewAxis=new THREE.Vector3(0,0,1);
+  for(let i=0;i<=U;i++){
+    const t=(i/U)*Math.PI*2, p=point(t), tang=tangent(t);
+    let n=new THREE.Vector3().crossVectors(viewAxis,tang);
+    if(n.lengthSq()<1e-6)n.set(1,0,0); else n.normalize();
+    for(let j=0;j<=V;j++){
+      const v=(j/V-.5)*2*W;
+      const q=p.clone().add(n.clone().multiplyScalar(v));
+      pos.push(q.x,q.y,q.z); uv.push(i/U,j/V);
+      if(j===0)bottom.push(q.x,q.y,q.z);
+      if(j===V)top.push(q.x,q.y,q.z);
+    }
+  }
+  for(let i=0;i<U;i++)for(let j=0;j<V;j++){const a=i*(V+1)+j,b=a+1,c=(i+1)*(V+1)+j,d=c+1;idx.push(a,b,c,b,d,c);}
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  const mat=new THREE.MeshPhysicalMaterial({color:0xd9a634,metalness:1,roughness:.3,clearcoat:.55,clearcoatRoughness:.2,reflectivity:1,emissive:0x2b1700,emissiveIntensity:.35,side:THREE.DoubleSide});
+  const mesh=new THREE.Mesh(geo,mat);
+  function rim(arr){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(arr,3));return new THREE.Line(g,new THREE.LineBasicMaterial({color:0xfff3cf,transparent:true,opacity:.82,blending:THREE.AdditiveBlending}));}
+  const group=new THREE.Group(); group.add(mesh,rim(top),rim(bottom)); scene.add(group);
+  scene.add(new THREE.HemisphereLight(0xfff0c8,0x1b0f02,1.1));
+  const key=new THREE.DirectionalLight(0xffffff,3); key.position.set(6,9,8); scene.add(key);
+  const cool=new THREE.DirectionalLight(0xbcd6ff,1); cool.position.set(-7,2,5); scene.add(cool);
+  const rimL=new THREE.DirectionalLight(0xffdf9e,1.7); rimL.position.set(-2,-7,-6); scene.add(rimL);
+  const spec=new THREE.PointLight(0xffffff,1.4,60); spec.position.set(0,1,10); scene.add(spec);
+  scene.add(new THREE.AmbientLight(0x1b0f02,.5));
+  let dragging=false,lastX=0,lastY=0,velX=0,velY=0,rotX=0,rotY=0,dragEnd=0;
+  canvas.addEventListener('mousedown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;velX=0;velY=0;});
+  window.addEventListener('mouseup',()=>{if(dragging){dragging=false;dragEnd=performance.now();}});
+  window.addEventListener('mousemove',e=>{if(!dragging)return;velX=(e.clientY-lastY)*.009;velY=(e.clientX-lastX)*.009;rotX+=velX;rotY+=velY;lastX=e.clientX;lastY=e.clientY;});
+  canvas.addEventListener('touchstart',e=>{dragging=true;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;velX=0;velY=0;},{passive:true});
+  canvas.addEventListener('touchend',()=>{if(dragging){dragging=false;dragEnd=performance.now();}});
+  canvas.addEventListener('touchmove',e=>{if(!dragging)return;velX=(e.touches[0].clientY-lastY)*.009;velY=(e.touches[0].clientX-lastX)*.009;rotX+=velX;rotY+=velY;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;},{passive:true});
+  function animate(){
+    if(stopIntroAnimation)return;
+    requestAnimationFrame(animate);
+    const dt=performance.now()-dragEnd;
+    if(!dragging){velX*=.91;velY*=.91;rotX+=velX;rotY+=velY+(dt>1200?.0028:0);}
+    group.rotation.x=rotX; group.rotation.y=rotY;
+    renderer.render(scene,camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>

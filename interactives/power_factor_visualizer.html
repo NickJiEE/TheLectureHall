@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Power factor waveform visualizer</title>
+  <link rel="stylesheet" href="../assets/css/lecturehall.css" />
+  <style>
+    html, body { background: transparent; }
+    body { margin: 0; overflow-x: hidden; }
+    .interactive-shell { min-height: 100%; }
+  </style>
+</head>
+<body class="interactive-page">
+  <main class="interactive-shell">
+
+<style>
+  .pf-wrap { padding: 1rem 0; font-family: var(--font-sans); }
+  .controls { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+  .ctrl-label { font-size: 14px; color: var(--color-text-secondary); white-space: nowrap; }
+  .pf-val { font-size: 18px; font-weight: 500; min-width: 36px; color: var(--color-text-primary); }
+  .metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.75rem 1rem; }
+  .card-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .card-val { font-size: 20px; font-weight: 500; }
+  .legend { display: flex; gap: 20px; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; flex-wrap: wrap; }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 12px; height: 3px; border-radius: 2px; display: inline-block; }
+</style>
+
+<div class="pf-wrap">
+  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Interactive power factor visualizer showing voltage, current, and instantaneous power as a function of phase shift</h2>
+
+  <div class="controls">
+    <span class="ctrl-label">Power factor</span>
+    <input type="range" min="0.01" max="1" step="0.01" value="1" id="pfSlider" style="flex:1;" />
+    <span class="pf-val" id="pfDisplay">1.00</span>
+  </div>
+
+  <div class="metrics">
+    <div class="card">
+      <div class="card-label">V<sub>rms</sub></div>
+      <div class="card-val" id="vrms" style="color:#c0392b;">120 V</div>
+    </div>
+    <div class="card">
+      <div class="card-label">I<sub>rms</sub></div>
+      <div class="card-val" id="irms" style="color:#2980b9;">— A</div>
+    </div>
+    <div class="card">
+      <div class="card-label">P<sub>load</sub> (target)</div>
+      <div class="card-val" id="pload" style="color:var(--color-text-primary);">120 W</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Phase shift θ</div>
+      <div class="card-val" id="theta" style="color:var(--color-text-secondary);">0°</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:#c0392b;height:2px;"></span>Voltage v(t)</span>
+    <span><span class="dot" style="background:#2980b9;height:2px;"></span>Current i(t)</span>
+    <span><span class="dot" style="background:rgba(46,204,113,0.7);width:12px;height:12px;border-radius:2px;"></span>P<sub>+</sub> (into load)</span>
+    <span><span class="dot" style="background:rgba(231,76,60,0.45);width:12px;height:12px;border-radius:2px;"></span>P<sub>−</sub> (back to source)</span>
+  </div>
+
+  <div style="position:relative;width:100%;height:300px;">
+    <canvas id="waveChart" role="img" aria-label="Voltage, current, and instantaneous power waveforms over one cycle"></canvas>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:1rem;">
+    <div class="card" style="border-left:3px solid #27ae60;">
+      <div class="card-label">P<sub>+</sub> avg (into load)</div>
+      <div class="card-val" id="ppos" style="color:#27ae60;">— W</div>
+    </div>
+    <div class="card" style="border-left:3px solid #e74c3c;">
+      <div class="card-label">P<sub>−</sub> avg (back out)</div>
+      <div class="card-val" id="pneg" style="color:#e74c3c;">— W</div>
+    </div>
+    <div class="card" style="border-left:3px solid #8e44ad;">
+      <div class="card-label">P<sub>net</sub> = P<sub>+</sub> − |P<sub>−</sub>|</div>
+      <div class="card-val" id="pnet" style="color:#8e44ad;">— W</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const P_TARGET = 120;
+const V_RMS = 120;
+const V_PEAK = V_RMS * Math.sqrt(2);
+const N = 500;
+const TWO_PI = 2 * Math.PI;
+
+function buildData(pf) {
+  const theta = Math.acos(pf);
+  const I_RMS = P_TARGET / (V_RMS * pf);
+  const I_PEAK = I_RMS * Math.sqrt(2);
+
+  const labels = [], vArr = [], iArr = [], pArr = [], pPosArr = [], pNegArr = [];
+  let sumPos = 0, sumNeg = 0, count = 0;
+
+  for (let k = 0; k <= N; k++) {
+    const t = k / N;
+    const angle = TWO_PI * t;
+    const v = V_PEAK * Math.sin(angle);
+    const i = I_PEAK * Math.sin(angle - theta);
+    const p = v * i;
+    labels.push(t.toFixed(3));
+    vArr.push(v);
+    iArr.push(i);
+    pArr.push(p);
+    pPosArr.push(p >= 0 ? p : 0);
+    pNegArr.push(p < 0 ? p : 0);
+    sumPos += p >= 0 ? p : 0;
+    sumNeg += p < 0 ? p : 0;
+    count++;
+  }
+
+  const pPosAvg = sumPos / count;
+  const pNegAvg = Math.abs(sumNeg / count);
+  const pNet = pPosAvg - pNegAvg;
+
+  return { labels, vArr, iArr, pArr, pPosArr, pNegArr, theta, I_RMS, I_PEAK, pPosAvg, pNegAvg, pNet };
+}
+
+const ctx = document.getElementById('waveChart');
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+const tickColor = isDark ? '#aaa' : '#666';
+
+let d = buildData(1.0);
+
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: d.labels,
+    datasets: [
+      {
+        label: 'P+ (into load)',
+        data: d.pPosArr,
+        fill: true,
+        backgroundColor: 'rgba(46,204,113,0.25)',
+        borderColor: 'transparent',
+        pointRadius: 0,
+        tension: 0.3,
+        yAxisID: 'yP',
+        order: 3
+      },
+      {
+        label: 'P− (back to source)',
+        data: d.pNegArr,
+        fill: true,
+        backgroundColor: 'rgba(231,76,60,0.2)',
+        borderColor: 'transparent',
+        pointRadius: 0,
+        tension: 0.3,
+        yAxisID: 'yP',
+        order: 3
+      },
+      {
+        label: 'v(t)',
+        data: d.vArr,
+        borderColor: '#c0392b',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.3,
+        yAxisID: 'yV',
+        order: 1
+      },
+      {
+        label: 'i(t)',
+        data: d.iArr,
+        borderColor: '#2980b9',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.3,
+        yAxisID: 'yI',
+        order: 2
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 80 },
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false }
+    },
+    scales: {
+      x: {
+        display: true,
+        ticks: {
+          maxTicksLimit: 6,
+          color: tickColor,
+          font: { size: 11 },
+          callback: (v, i) => i % 100 === 0 ? (i/N).toFixed(1) + 'T' : ''
+        },
+        grid: { color: gridColor },
+        title: { display: true, text: 'Time (one full cycle)', color: tickColor, font: { size: 11 } }
+      },
+      yV: {
+        type: 'linear',
+        position: 'left',
+        ticks: { color: '#c0392b', font: { size: 11 }, maxTicksLimit: 5 },
+        grid: { color: gridColor },
+        title: { display: true, text: 'Voltage (V)', color: '#c0392b', font: { size: 11 } }
+      },
+      yI: {
+        type: 'linear',
+        position: 'right',
+        ticks: { color: '#2980b9', font: { size: 11 }, maxTicksLimit: 5 },
+        grid: { display: false },
+        title: { display: true, text: 'Current (A)', color: '#2980b9', font: { size: 11 } }
+      },
+      yP: {
+        type: 'linear',
+        position: 'right',
+        display: false
+      }
+    }
+  }
+});
+
+function update() {
+  const pf = parseFloat(document.getElementById('pfSlider').value);
+  const d = buildData(pf);
+
+  document.getElementById('pfDisplay').textContent = pf.toFixed(2);
+  document.getElementById('irms').textContent = d.I_RMS.toFixed(2) + ' A';
+  document.getElementById('theta').textContent = (d.theta * 180 / Math.PI).toFixed(1) + '°';
+  document.getElementById('pload').textContent = P_TARGET.toFixed(0) + ' W';
+  document.getElementById('ppos').textContent = d.pPosAvg.toFixed(1) + ' W';
+  document.getElementById('pneg').textContent = d.pNegAvg.toFixed(1) + ' W';
+  document.getElementById('pnet').textContent = d.pNet.toFixed(1) + ' W';
+
+  chart.data.labels = d.labels;
+  chart.data.datasets[0].data = d.pPosArr;
+  chart.data.datasets[1].data = d.pNegArr;
+  chart.data.datasets[2].data = d.vArr;
+  chart.data.datasets[3].data = d.iArr;
+
+  const iMax = d.I_PEAK * 1.2;
+  chart.options.scales.yI.min = -iMax;
+  chart.options.scales.yI.max = iMax;
+
+  const pMax = V_PEAK * d.I_PEAK * 1.1;
+  chart.options.scales.yP.min = -pMax;
+  chart.options.scales.yP.max = pMax;
+
+  chart.update('none');
+}
+
+document.getElementById('pfSlider').addEventListener('input', update);
+update();
+</script>
+
+  </main>
+</body>
+</html>
