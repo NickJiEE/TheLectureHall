@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Boost inductor position advantage</title>
   <link rel="stylesheet" href="../assets/css/lecturehall.css" />
+  <script defer src="../assets/js/lecturehall-cursor.js"></script>
   <style>
     html, body { background: transparent; }
     body { margin: 0; overflow-x: hidden; }
@@ -43,7 +44,7 @@
       </defs>
 
       <!-- LEFT: Non-boost (e.g. flyback) -->
-      <text style="font-size:12px;font-weight:500;fill:#E24B4A" x="160" y="22" text-anchor="middle">Flyback / Buck — L on output side</text>
+      <text style="font-size:12px;font-weight:500;fill:#ff8a80" x="160" y="22" text-anchor="middle">Flyback / Buck — L on output side</text>
 
       <!-- Source -->
       <rect x="10" y="60" width="50" height="40" rx="6" fill="var(--color-background-tertiary)" stroke="var(--color-text-secondary)" stroke-width="1.2"/>
@@ -51,17 +52,17 @@
 
       <!-- Direct wire to switch — NO inductor on input -->
       <line x1="60" y1="80" x2="110" y2="80" stroke="var(--color-text-secondary)" stroke-width="2" fill="none"/>
-      <text style="font-size:10px;fill:#E24B4A" x="85" y="72" text-anchor="middle">direct wire</text>
-      <text style="font-size:10px;fill:#E24B4A" x="85" y="100" text-anchor="middle">high dI/dt here!</text>
+      <text style="font-size:10px;fill:#ff8a80" x="85" y="72" text-anchor="middle">direct wire</text>
+      <text style="font-size:10px;fill:#ff8a80" x="85" y="100" text-anchor="middle">high dI/dt here!</text>
 
       <!-- Switch -->
       <rect x="110" y="65" width="40" height="30" rx="5" fill="var(--color-background-tertiary)" stroke="var(--color-text-primary)" stroke-width="1.5"/>
       <text style="font-size:11px;fill:var(--color-text-primary)" x="130" y="84" text-anchor="middle">SW</text>
 
       <!-- Arrow showing input current path -->
-      <line x1="35" y1="100" x2="35" y2="130" stroke="#E24B4A" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>
-      <line x1="35" y1="130" x2="130" y2="130" stroke="#E24B4A" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>
-      <line x1="130" y1="130" x2="130" y2="95" stroke="#E24B4A" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar)" fill="none"/>
+      <line x1="35" y1="100" x2="35" y2="130" stroke="#ff8a80" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>
+      <line x1="35" y1="130" x2="130" y2="130" stroke="#ff8a80" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>
+      <line x1="130" y1="130" x2="130" y2="95" stroke="#ff8a80" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar)" fill="none"/>
 
       <!-- L on output side -->
       <line x1="150" y1="80" x2="175" y2="80" stroke="var(--color-text-secondary)" stroke-width="1.5" fill="none"/>
@@ -77,16 +78,16 @@
       <line x1="35" y1="130" x2="280" y2="130" stroke="var(--color-text-secondary)" stroke-width="1.5" fill="none"/>
 
       <!-- Input current waveform inset -->
-      <rect x="10" y="150" width="300" height="70" rx="6" fill="var(--color-background-tertiary)" stroke="#E24B4A" stroke-width="1"/>
-      <text style="font-size:10px;fill:#E24B4A" x="160" y="167" text-anchor="middle">Input current seen by source</text>
+      <rect x="10" y="150" width="300" height="70" rx="6" fill="var(--color-background-tertiary)" stroke="#ff8a80" stroke-width="1"/>
+      <text style="font-size:10px;fill:#ff8a80" x="160" y="167" text-anchor="middle">Input current seen by source</text>
       <!-- Square wave -->
       <line x1="20" y1="210" x2="300" y2="210" stroke="var(--color-text-tertiary)" stroke-width="0.6" fill="none"/>
       <path d="M20 210 L50 210 L50 170 L90 170 L90 210 L130 210 L130 170 L170 170 L170 210 L210 210 L210 170 L250 170 L250 210 L290 210"
-            fill="none" stroke="#E24B4A" stroke-width="2"/>
-      <text style="font-size:9px;fill:#E24B4A" x="160" y="225" text-anchor="middle">Square wave — infinite dI/dt at transitions</text>
+            fill="none" stroke="#ff8a80" stroke-width="2"/>
+      <text style="font-size:9px;fill:#ff8a80" x="160" y="225" text-anchor="middle">Square wave — infinite dI/dt at transitions</text>
 
       <!-- RIGHT: Boost -->
-      <text style="font-size:12px;font-weight:500;fill:#1D9E75" x="510" y="22" text-anchor="middle">Boost PFC — L on input side</text>
+      <text style="font-size:12px;font-weight:500;fill:#5DCAA5" x="510" y="22" text-anchor="middle">Boost PFC — L on input side</text>
 
       <!-- Source -->
       <rect x="350" y="60" width="50" height="40" rx="6" fill="var(--color-background-tertiary)" stroke="var(--color-text-secondary)" stroke-width="1.2"/>
@@ -95,8 +96,8 @@
       <!-- L on input side — BEFORE switch -->
       <line x1="400" y1="80" x2="420" y2="80" stroke="var(--color-text-secondary)" stroke-width="2" fill="none"/>
       <path d="M420 80 Q427 68 434 80 Q441 68 448 80 Q455 68 462 80 Q469 68 476 80" fill="none" stroke="var(--color-text-primary)" stroke-width="2"/>
-      <text style="font-size:10px;fill:#1D9E75" x="448" y="62" text-anchor="middle">L (input side)</text>
-      <text style="font-size:10px;fill:#1D9E75" x="448" y="100" text-anchor="middle">smooths input current</text>
+      <text style="font-size:10px;fill:#5DCAA5" x="448" y="62" text-anchor="middle">L (input side)</text>
+      <text style="font-size:10px;fill:#5DCAA5" x="448" y="100" text-anchor="middle">smooths input current</text>
       <line x1="476" y1="80" x2="510" y2="80" stroke="var(--color-text-secondary)" stroke-width="2" fill="none"/>
 
       <!-- SW node -->
@@ -120,11 +121,11 @@
       <line x1="375" y1="100" x2="375" y2="130" stroke="var(--color-text-secondary)" stroke-width="1.5" fill="none"/>
 
       <!-- Input current waveform inset -->
-      <rect x="350" y="150" width="300" height="70" rx="6" fill="var(--color-background-tertiary)" stroke="#1D9E75" stroke-width="1"/>
-      <text style="font-size:10px;fill:#1D9E75" x="500" y="167" text-anchor="middle">Input current seen by source</text>
+      <rect x="350" y="150" width="300" height="70" rx="6" fill="var(--color-background-tertiary)" stroke="#5DCAA5" stroke-width="1"/>
+      <text style="font-size:10px;fill:#5DCAA5" x="500" y="167" text-anchor="middle">Input current seen by source</text>
       <!-- Triangular ripple riding sine envelope -->
-      <path id="tri-path" fill="none" stroke="#1D9E75" stroke-width="2"/>
-      <text style="font-size:9px;fill:#1D9E75" x="500" y="225" text-anchor="middle">Triangular ripple — finite, controlled dI/dt</text>
+      <path id="tri-path" fill="none" stroke="#5DCAA5" stroke-width="2"/>
+      <text style="font-size:9px;fill:#5DCAA5" x="500" y="225" text-anchor="middle">Triangular ripple — finite, controlled dI/dt</text>
     </svg>
     <script>
     (function(){
@@ -167,11 +168,11 @@
       <text style="font-size:10px;fill:var(--color-text-tertiary)" x="8" y="32">Gate</text>
       <line x1="60" y1="50" x2="620" y2="50" stroke="var(--color-text-tertiary)" stroke-width="0.6" fill="none"/>
       <line x1="60" y1="25" x2="620" y2="25" stroke="var(--color-text-tertiary)" stroke-width="0.4" stroke-dasharray="3 3" fill="none"/>
-      <path d="M60 50 L200 50 L200 25 L340 25 L340 50 L480 50 L480 25 L620 25" fill="none" stroke="#D4963B" stroke-width="2"/>
-      <text style="font-size:9px;fill:#D4963B" x="120" y="62" text-anchor="middle">OFF</text>
-      <text style="font-size:9px;fill:#D4963B" x="270" y="20" text-anchor="middle">ON</text>
-      <text style="font-size:9px;fill:#D4963B" x="410" y="62" text-anchor="middle">OFF</text>
-      <text style="font-size:9px;fill:#D4963B" x="550" y="20" text-anchor="middle">ON</text>
+      <path d="M60 50 L200 50 L200 25 L340 25 L340 50 L480 50 L480 25 L620 25" fill="none" stroke="#f0b64c" stroke-width="2"/>
+      <text style="font-size:9px;fill:#f0b64c" x="120" y="62" text-anchor="middle">OFF</text>
+      <text style="font-size:9px;fill:#f0b64c" x="270" y="20" text-anchor="middle">ON</text>
+      <text style="font-size:9px;fill:#f0b64c" x="410" y="62" text-anchor="middle">OFF</text>
+      <text style="font-size:9px;fill:#f0b64c" x="550" y="20" text-anchor="middle">ON</text>
 
       <!-- Row 2: Input current IL (triangular) -->
       <text style="font-size:10px;fill:var(--color-text-tertiary)" x="8" y="100">IL</text>
@@ -179,16 +180,16 @@
       <line x1="60" y1="140" x2="620" y2="140" stroke="var(--color-text-tertiary)" stroke-width="0.6" fill="none"/>
       <line x1="60" y1="90" x2="620" y2="90" stroke="var(--color-text-tertiary)" stroke-width="0.4" stroke-dasharray="3 3" fill="none"/>
       <!-- Triangular current: ramps up when ON, ramps down when OFF -->
-      <path d="M60 130 L200 90 L340 130 L480 90 L620 130" fill="none" stroke="#1D9E75" stroke-width="2.5"/>
+      <path d="M60 130 L200 90 L340 130 L480 90 L620 130" fill="none" stroke="#5DCAA5" stroke-width="2.5"/>
       <!-- dI/dt annotations -->
       <line x1="60" y1="130" x2="200" y2="90" stroke="none"/>
       <!-- slope arrow up -->
-      <line x1="90" y1="122" x2="150" y2="102" stroke="#1D9E75" stroke-width="1" marker-end="url(#ar2)" fill="none"/>
-      <text style="font-size:9px;fill:#1D9E75" x="155" y="100">dI/dt = Vin/L</text>
+      <line x1="90" y1="122" x2="150" y2="102" stroke="#5DCAA5" stroke-width="1" marker-end="url(#ar2)" fill="none"/>
+      <text style="font-size:9px;fill:#5DCAA5" x="155" y="100">dI/dt = Vin/L</text>
       <text style="font-size:9px;fill:var(--color-text-secondary)" x="155" y="111">(finite, controlled)</text>
       <!-- slope arrow down -->
-      <line x1="370" y1="122" x2="440" y2="136" stroke="#1D9E75" stroke-width="1" marker-end="url(#ar2)" fill="none"/>
-      <text style="font-size:9px;fill:#1D9E75" x="380" y="118">dI/dt = (Vout−Vin)/L</text>
+      <line x1="370" y1="122" x2="440" y2="136" stroke="#5DCAA5" stroke-width="1" marker-end="url(#ar2)" fill="none"/>
+      <text style="font-size:9px;fill:#5DCAA5" x="380" y="118">dI/dt = (Vout−Vin)/L</text>
       <text style="font-size:9px;fill:var(--color-text-secondary)" x="380" y="129">(also finite)</text>
 
       <!-- Row 3: Switch node current (what the MOSFET sees — square wave) -->
@@ -197,10 +198,10 @@
       <line x1="60" y1="240" x2="620" y2="240" stroke="var(--color-text-tertiary)" stroke-width="0.6" fill="none"/>
       <line x1="60" y1="195" x2="620" y2="195" stroke="var(--color-text-tertiary)" stroke-width="0.4" stroke-dasharray="3 3" fill="none"/>
       <!-- Square current through MOSFET: only flows when ON -->
-      <path d="M60 240 L200 240 L200 195 L340 195 L340 240 L480 240 L480 195 L620 195" fill="none" stroke="#E24B4A" stroke-width="2"/>
-      <text style="font-size:9px;fill:#E24B4A" x="270" y="190">MOSFET sees hard transitions</text>
-      <text style="font-size:9px;fill:#E24B4A" x="270" y="200">but this stays inside the converter</text>
-      <text style="font-size:9px;fill:#1D9E75" x="270" y="255" text-anchor="middle">Input source never sees this — L blocks it</text>
+      <path d="M60 240 L200 240 L200 195 L340 195 L340 240 L480 240 L480 195 L620 195" fill="none" stroke="#ff8a80" stroke-width="2"/>
+      <text style="font-size:9px;fill:#ff8a80" x="270" y="190">MOSFET sees hard transitions</text>
+      <text style="font-size:9px;fill:#ff8a80" x="270" y="200">but this stays inside the converter</text>
+      <text style="font-size:9px;fill:#5DCAA5" x="270" y="255" text-anchor="middle">Input source never sees this — L blocks it</text>
 
       <!-- Vertical dividers -->
       <line x1="200" y1="15" x2="200" y2="250" stroke="var(--color-text-tertiary)" stroke-width="0.5" stroke-dasharray="2 3" fill="none"/>
@@ -218,37 +219,37 @@
 
     <div style="display:flex;flex-direction:column;gap:0;">
 <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:0.5px solid var(--color-border-tertiary);">
-  <div style="min-width:28px;height:28px;border-radius:50%;background:#3B8BD422;border:1.5px solid #3B8BD4;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#3B8BD4;flex-shrink:0;">1</div>
+  <div style="min-width:28px;height:28px;border-radius:50%;background:#80c7ff22;border:1.5px solid #80c7ff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#80c7ff;flex-shrink:0;">1</div>
   <div>
-    <div style="font-size:12px;font-weight:500;color:#3B8BD4;margin-bottom:4px;">L on input → input current is always continuous</div>
+    <div style="font-size:12px;font-weight:500;color:#80c7ff;margin-bottom:4px;">L on input → input current is always continuous</div>
     <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.6;">Current through L cannot jump. So even when the MOSFET switches at 100 kHz, the current flowing from the AC source into the inductor is a smooth ramp — never a step, never a discontinuity. This is a physical law, not a styling choice.</div>
   </div>
 </div>
 <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:0.5px solid var(--color-border-tertiary);">
-  <div style="min-width:28px;height:28px;border-radius:50%;background:#8B63D422;border:1.5px solid #8B63D4;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#8B63D4;flex-shrink:0;">2</div>
+  <div style="min-width:28px;height:28px;border-radius:50%;background:#d8b4fe22;border:1.5px solid #d8b4fe;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#d8b4fe;flex-shrink:0;">2</div>
   <div>
-    <div style="font-size:12px;font-weight:500;color:#8B63D4;margin-bottom:4px;">Continuous current → controllable average current</div>
+    <div style="font-size:12px;font-weight:500;color:#d8b4fe;margin-bottom:4px;">Continuous current → controllable average current</div>
     <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.6;">Because the current ramps linearly each switching cycle, the average current per cycle is the midpoint of the ramp. By controlling duty cycle, the controller sets that average current cycle by cycle.</div>
   </div>
 </div>
 <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:0.5px solid var(--color-border-tertiary);">
-  <div style="min-width:28px;height:28px;border-radius:50%;background:#1D9E7522;border:1.5px solid #1D9E75;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#1D9E75;flex-shrink:0;">3</div>
+  <div style="min-width:28px;height:28px;border-radius:50%;background:#5DCAA522;border:1.5px solid #5DCAA5;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#5DCAA5;flex-shrink:0;">3</div>
   <div>
-    <div style="font-size:12px;font-weight:500;color:#1D9E75;margin-bottom:4px;">Controllable average → shapeable waveform</div>
+    <div style="font-size:12px;font-weight:500;color:#5DCAA5;margin-bottom:4px;">Controllable average → shapeable waveform</div>
     <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.6;">If you can set the average current each cycle, you can make it follow a sine reference. A PFC controller adjusts duty cycle many thousands of times per second so each cycle average lands on the desired 50/60 Hz current waveform.</div>
   </div>
 </div>
 <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:0.5px solid var(--color-border-tertiary);">
-  <div style="min-width:28px;height:28px;border-radius:50%;background:#D4963B22;border:1.5px solid #D4963B;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#D4963B;flex-shrink:0;">4</div>
+  <div style="min-width:28px;height:28px;border-radius:50%;background:#f0b64c22;border:1.5px solid #f0b64c;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#f0b64c;flex-shrink:0;">4</div>
   <div>
-    <div style="font-size:12px;font-weight:500;color:#D4963B;margin-bottom:4px;">Sinusoidal current in phase with voltage → PF ≈ 1</div>
+    <div style="font-size:12px;font-weight:500;color:#f0b64c;margin-bottom:4px;">Sinusoidal current in phase with voltage → PF ≈ 1</div>
     <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.6;">With current shaped as a sine wave that tracks the AC voltage, the supply looks closer to a pure resistor to the grid. Real power approaches apparent power, and both phase displacement and harmonic distortion drop.</div>
   </div>
 </div>
 <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:0.5px solid var(--color-border-tertiary);">
-  <div style="min-width:28px;height:28px;border-radius:50%;background:#E24B4A22;border:1.5px solid #E24B4A;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#E24B4A;flex-shrink:0;">5</div>
+  <div style="min-width:28px;height:28px;border-radius:50%;background:#ff8a8022;border:1.5px solid #ff8a80;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#ff8a80;flex-shrink:0;">5</div>
   <div>
-    <div style="font-size:12px;font-weight:500;color:#E24B4A;margin-bottom:4px;">Why other topologies can’t do this as naturally</div>
+    <div style="font-size:12px;font-weight:500;color:#ff8a80;margin-bottom:4px;">Why other topologies can’t do this as naturally</div>
     <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.6;">In a flyback or buck, the input current can be discontinuous at the input terminal. You can still add filtering or control, but the boost topology starts with a valuable property: the input-side inductor naturally smooths and exposes the current you want to shape.</div>
   </div>
 </div>

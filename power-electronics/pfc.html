@@ -6,24 +6,25 @@
   <title>PFC Fundamentals · The Lecture Hall</title>
   <meta name="description" content="Power factor correction fundamentals with interactives for PF, boost PFC, CrCM, CCM, and EMI intuition." />
   <link rel="stylesheet" href="../assets/css/lecturehall.css" />
+  <script defer src="../assets/js/lecturehall-cursor.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body class="lh-page">
   <div class="page-shell">
     <nav class="site-nav" aria-label="Main navigation">
       <div>
-        <a class="nav-brand" href="../index.html">The <span>Lecture</span> Hall</a>
+        <a class="nav-brand" href="../index.html#main">The <span>Lecture</span> Hall</a>
         <div class="nav-sub">Power Electronics · PFC Fundamentals</div>
       </div>
       <div class="nav-links">
-        <a href="../index.html">Index</a>
+        <a href="../index.html#main">Index</a>
         <a href="index.html">Power Electronics</a>
         <a href="pfc.html" class="active">PFC</a>
         <a href="llc-resonant-converter.html">LLC</a>
       </div>
     </nav>
 
-    <div class="breadcrumbs"><a href="../index.html">Index</a><span>/</span><a href="index.html">Power Electronics</a><span>/</span><span>PFC Fundamentals</span></div>
+    <div class="breadcrumbs"><a href="../index.html#main">Index</a><span>/</span><a href="index.html">Power Electronics</a><span>/</span><span>PFC Fundamentals</span></div>
 
     <header class="topic-header">
       <div class="kicker">Power Factor Correction</div>
@@ -44,7 +45,7 @@
 
       <div class="interactive-panel">
         <div class="interactive-title"><strong>Interactive: beer glass analogy</strong><span>P, Q, S as an intuition map</span></div>
-        <iframe class="interactive-frame frame-sm" src="../interactives/beer_pf_analogy.html" title="Beer glass analogy for power factor" loading="lazy"></iframe>
+        <iframe class="interactive-frame frame-beer" src="../interactives/beer_pf_analogy.html" title="Beer glass analogy for power factor" loading="lazy"></iframe>
       </div>
 
       <div class="interactive-panel">
@@ -134,7 +135,9 @@
     <section class="content-section" id="further-reading">
       <h2>Further reading</h2>
       <div class="source-card">
-        Main source for this page: <a href="../resources/pfc.pdf">Power Factor Correction (PFC) Circuit Basics</a>. Continue next with the <a href="llc-resonant-converter.html">LLC resonant converter</a>, which is a common isolated DC/DC stage after a regulated PFC bus.
+        <strong>Source credited:</strong> <em>Power Factor Correction (PFC) Circuit Basics</em>, Brent McDonald and Ben Lough, Texas Instruments Power Supply Design Seminar SEM2400 Topic 2, TI Literature Number ZHCP224, © 2020 Texas Instruments Incorporated. <a href="../resources/pfc.pdf">Open the uploaded PFC PDF</a>.
+        <br><br>
+        Continue next with the <a href="llc-resonant-converter.html">LLC resonant converter</a>, which is a common isolated DC/DC stage after a regulated PFC bus.
       </div>
     </section>
 

@@ -5,15 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Lecture Hall · Living EE Textbook</title>
   <meta name="description" content="The Lecture Hall is an intuition-first, simulation-backed educational platform for Electrical Engineering." />
+  <script>
+    (function(){
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var forceIntro = params.get('intro') === '1';
+        var skip = !forceIntro && (sessionStorage.getItem('lectureHallIntroSeen') === '1' || window.location.hash === '#main' || params.get('skipIntro') === '1');
+        if (skip) document.documentElement.classList.add('skip-intro-start');
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="assets/css/lecturehall.css" />
+  <script defer src="assets/js/lecturehall-cursor.js"></script>
 </head>
 <body>
 <div id="lh-root">
-  <div id="intro">
-    <canvas id="three-canvas" width="380" height="240" aria-hidden="true"></canvas>
-    <div class="intro-title">The Lecture <span>Hall</span><span class="blink"></span></div>
-    <div class="intro-sub">A living EE textbook</div>
-    <button class="enter-btn" id="enter-btn" type="button">Enter the Hall</button>
+  <div id="intro" aria-label="The Lecture Hall animated intro">
+    <button class="intro-skip" id="skip-intro" type="button" aria-label="Skip intro and open the index">Skip intro →</button>
+    <div class="intro-orb orb-a" aria-hidden="true"></div>
+    <div class="intro-orb orb-b" aria-hidden="true"></div>
+    <div class="intro-shell">
+      <section class="intro-left">
+        <div class="intro-badge">EE · living textbook · lab bench</div>
+        <canvas id="three-canvas" width="460" height="290" aria-hidden="true"></canvas>
+        <div class="intro-title">The Lecture <span>Hall</span><span class="blink"></span></div>
+        <p class="intro-lede">Concepts, simulations, and design intuition for electrical engineers — organized like a course, explored like a lab.</p>
+        <div class="intro-actions">
+          <button class="enter-btn" id="enter-btn" type="button">Enter the Hall</button>
+          <span class="drag-hint">Follow the signal path · intuition first</span>
+        </div>
+      </section>
+      <aside class="intro-console" aria-label="Animated topic preview">
+        <div class="console-top"><span></span><span></span><span></span><em>floorplan.svg</em></div>
+        <div class="floorplan-grid" aria-label="Lecture Hall section floorplan">
+          <div class="floor-room" style="--room-accent:#67e8c8"><strong>Circuits</strong><span>nodes, loops, op-amps</span></div>
+          <div class="floor-room" style="--room-accent:#d8b4fe"><strong>Analog</strong><span>MOS, biasing, filters</span></div>
+          <div class="floor-room" style="--room-accent:#93c5fd"><strong>Signals</strong><span>Fourier, Laplace, sampling</span></div>
+          <div class="floor-room active" style="--room-accent:#f0c060"><em>live</em><strong>Power</strong><span>PFC, LLC, converters</span></div>
+          <div class="floor-room center"><strong>Main Hall</strong><span>intuition → theory → interactive</span></div>
+          <div class="floor-room" style="--room-accent:#fb923c"><strong>Digital</strong><span>FSM, RTL, FPGA</span></div>
+          <div class="floor-room" style="--room-accent:#f9a8d4"><strong>VLSI / IC</strong><span>CMOS, layout, PLL</span></div>
+          <div class="floor-room" style="--room-accent:#a78bfa"><strong>Architecture</strong><span>pipelines, caches, OoO</span></div>
+          <div class="floor-room" style="--room-accent:#67e8c8"><strong>Comms / RF</strong><span>modulation, antennas</span></div>
+        </div>
+        <div class="floor-caption">The intro now reads like a campus map instead of a short list: the Power wing is live, while the other rooms preview where the textbook can grow next.</div>
+        <div class="equation-stream" aria-hidden="true">
+          <div><code>PF = P / S</code><span>grid utilization</span></div>
+          <div><code>f<sub>r</sub> = 1 / 2π√LC</code><span>resonant tank</span></div>
+          <div><code>Aβ = −1</code><span>feedback edge</span></div>
+        </div>
+        <div class="signal-preview" aria-hidden="true">
+          <svg viewBox="0 0 360 92" role="img">
+            <path class="trace trace-a" d="M0 46 C28 10 58 10 86 46 S144 82 172 46 S230 10 258 46 S316 82 360 46" />
+            <path class="trace trace-b" d="M0 58 C28 22 58 22 86 58 S144 94 172 58 S230 22 258 58 S316 94 360 58" />
+            <line x1="0" y1="46" x2="360" y2="46" />
+          </svg>
+        </div>
+        <p class="intro-note">Start anywhere, then open the interactives when the math needs a picture.</p>
+      </aside>
+    </div>
   </div>
 
   <main id="main" aria-label="The Lecture Hall topic index">
@@ -23,8 +73,11 @@
           <div class="logo">The <span>Lecture</span> Hall</div>
           <div class="logo-sub">EE · Living Textbook · Open Contribution</div>
         </div>
-        <div class="search-wrap">
-          <input type="text" id="search-input" placeholder="Search topics..." aria-label="Search topics" />
+        <div class="topbar-actions">
+          <div class="search-wrap">
+            <input type="text" id="search-input" placeholder="Search topics..." aria-label="Search topics" />
+          </div>
+          <button class="replay-intro" id="replay-intro" type="button">Replay intro</button>
         </div>
       </div>
 
@@ -62,7 +115,6 @@
   </main>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const SECTIONS = [
   { name:"Power Electronics", accent:"#f0c060", topics:[
@@ -154,7 +206,7 @@ function renderCards(filter, query){
     });
     ct.appendChild(grid);
   });
-  if(!ct.children.length)ct.innerHTML='<div style="color:#5a4e38;font-size:13px;padding:2rem 0;font-family:var(--font-mono);">No topics found.</div>';
+  if(!ct.children.length)ct.innerHTML='<div style="color:var(--color-text-tertiary);font-size:13px;padding:2rem 0;font-family:var(--font-mono);">No topics found.</div>';
 }
 let currentFilter='all', currentSearch='';
 document.getElementById('filter-bar').addEventListener('click',e=>{
@@ -171,16 +223,41 @@ document.getElementById('search-input').addEventListener('input',e=>{
 });
 renderCards('all','');
 
-function enterHall(){
-  document.getElementById('intro').classList.add('exit');
-  document.getElementById('main').classList.add('visible');
-  document.body.classList.add('hall-entered');
-  setTimeout(()=>{ stopIntroAnimation = true; }, 1200);
-}
-document.getElementById('enter-btn').addEventListener('click', enterHall);
+const INTRO_KEY = 'lectureHallIntroSeen';
+const START_SKIPPED = document.documentElement.classList.contains('skip-intro-start');
+let stopIntroAnimation = START_SKIPPED;
 
-let stopIntroAnimation = false;
-(function initIntroCanvas(){
+function showMain(instant=false, remember=true){
+  const intro = document.getElementById('intro');
+  const main = document.getElementById('main');
+  if(remember) sessionStorage.setItem(INTRO_KEY, '1');
+  main.classList.add('visible');
+  document.body.classList.add('hall-entered');
+  if(instant){
+    intro.classList.add('skip');
+    stopIntroAnimation = true;
+  } else {
+    intro.classList.add('exit');
+    setTimeout(()=>{ stopIntroAnimation = true; }, 1200);
+  }
+}
+
+function replayIntro(){
+  sessionStorage.removeItem(INTRO_KEY);
+  window.location.href = window.location.pathname + '?intro=1';
+}
+
+const params = new URLSearchParams(window.location.search);
+const forceIntro = params.get('intro') === '1';
+const shouldSkipIntro = !forceIntro && (sessionStorage.getItem(INTRO_KEY) === '1' || location.hash === '#main' || params.get('skipIntro') === '1');
+if(shouldSkipIntro) showMain(true, false);
+
+document.getElementById('enter-btn').addEventListener('click', ()=>showMain(false, true));
+document.getElementById('skip-intro').addEventListener('click', ()=>showMain(false, true));
+document.getElementById('replay-intro').addEventListener('click', replayIntro);
+
+function initIntroCanvas(){
+  if(stopIntroAnimation) return;
   const canvas = document.getElementById('three-canvas');
   if(!canvas || !window.THREE){
     const ctx = canvas && canvas.getContext('2d');
@@ -200,12 +277,20 @@ let stopIntroAnimation = false;
     return;
   }
   const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
-  renderer.setSize(380,240);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.setClearColor(0x000000,0);
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(36,380/240,0.1,100);
+  const camera = new THREE.PerspectiveCamera(36,460/290,0.1,100);
   camera.position.set(0,0,9); camera.lookAt(0,0,0);
+  function resizeCanvas(){
+    const w = Math.max(300, Math.round(canvas.clientWidth || 460));
+    const h = Math.max(210, Math.round(canvas.clientHeight || 290));
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
   const A=3.0, B=2.4, DEPTH=1.2, U=520, V=26, W=.42;
   function point(t){return new THREE.Vector3(A*Math.sin(t), B*Math.sin(t)*Math.cos(t), -DEPTH*Math.cos(t));}
   function tangent(t){const d=.0004;return point(t+d).sub(point(t-d)).normalize();}
@@ -254,7 +339,18 @@ let stopIntroAnimation = false;
     renderer.render(scene,camera);
   }
   animate();
-})();
+}
+
+function loadIntroCanvas(){
+  if(stopIntroAnimation || shouldSkipIntro) return;
+  if(window.THREE){ initIntroCanvas(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  s.onload = initIntroCanvas;
+  s.onerror = initIntroCanvas;
+  document.head.appendChild(s);
+}
+loadIntroCanvas();
 </script>
 </body>
 </html>
