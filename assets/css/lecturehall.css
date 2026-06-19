@@ -65,7 +65,6 @@ body::before {
   position: relative;
 }
 
-/* Landing intro: fixed overlay so the index content can use normal page height after entry. */
 #intro {
   position: fixed;
   inset: 0;
@@ -348,6 +347,29 @@ html.skip-intro-start #main { opacity: 1 !important; pointer-events: all !import
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(210,160,50,0.1);
 }
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  gap: 11px;
+  min-width: 0;
+}
+.brand-copy { min-width: 0; }
+.brand-icon {
+  display: block;
+  width: 54px;
+  height: 34px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  object-position: center;
+  border: 1px solid rgba(240,192,96,.20);
+  border-radius: 8px;
+  background: #030303;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.018) inset,
+    0 0 15px rgba(240,192,96,.10);
+  filter: saturate(1.04) contrast(1.04);
+}
 .logo, .nav-brand {
   font-family: var(--font-mono);
   font-size: 15px;
@@ -564,6 +586,8 @@ html.skip-intro-start #main { opacity: 1 !important; pointer-events: all !import
 @media (max-width: 760px) {
   .main-inner, .page-shell { width: min(100% - 24px, var(--content-max)); padding-top: 20px; }
   .topbar, .site-nav { align-items: flex-start; flex-direction: column; }
+  .brand-icon { width: 49px; height: 31px; border-radius: 7px; }
+  .brand-lockup { gap: 9px; }
   .intro-shell { grid-template-columns: 1fr; gap: 18px; }
   .intro-console { width: min(100%, 560px); margin: 0 auto; }
   .console-grid, .floorplan-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -584,8 +608,7 @@ html.skip-intro-start #main { opacity: 1 !important; pointer-events: all !import
   .nav-links a { padding-left: 0; }
 }
 
-/* Dynamic site cursor: a subtle golden signal probe.
-   Uses real DOM elements instead of a static SVG, so it can breathe, lag, and morph on hover. */
+/* Dynamic site cursor: lightweight curved trail + Möbius hover cursor */
 @media (pointer: fine) {
   html.lh-custom-cursor,
   html.lh-custom-cursor body,
@@ -620,123 +643,255 @@ html.skip-intro-start #main { opacity: 1 !important; pointer-events: all !import
     cursor: text !important;
   }
 
+  .lh-cursor-trail {
+    position: fixed;
+    inset: 0;
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 2147483644;
+    opacity: 0;
+    contain: strict;
+    transform: translateZ(0);
+    transition: opacity .12s ease;
+  }
+
+  .lh-cursor-halo,
   .lh-cursor-dot,
   .lh-cursor-ring,
-  .lh-cursor-tail,
-  .lh-cursor-spark {
+  .lh-cursor-spark,
+  .lh-cursor-mobius {
     position: fixed;
     left: 0;
     top: 0;
     pointer-events: none;
     z-index: 2147483647;
     opacity: 0;
-    will-change: transform, opacity, width, height;
+    will-change: transform, opacity;
+  }
+
+  .lh-cursor-halo {
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    background: radial-gradient(circle,
+      rgba(255, 237, 182, .10) 0%,
+      rgba(240, 192, 96, .12) 25%,
+      rgba(240, 192, 96, .045) 48%,
+      rgba(240, 192, 96, 0) 74%);
+    transform: translate3d(-20px,-20px,0) translate(-50%,-50%);
+    transition: width .16s ease, height .16s ease, opacity .16s ease;
   }
 
   .lh-cursor-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 999px;
-    background: var(--accent-gold);
-    box-shadow: 0 0 16px rgba(240,192,96,.55), 0 0 2px rgba(255,255,255,.85) inset;
+    background: #fff0c7;
+    box-shadow:
+      0 0 6px rgba(255, 245, 212, .72),
+      0 0 11px rgba(240, 192, 96, .30),
+      0 0 2px rgba(255,255,255,.85) inset;
     transform: translate3d(-20px,-20px,0) translate(-50%,-50%);
-    transition: width .16s ease, height .16s ease, background .16s ease, opacity .18s ease;
+    transition: width .14s ease, height .14s ease, opacity .14s ease, background .14s ease;
   }
 
   .lh-cursor-ring {
-    width: 28px;
-    height: 28px;
-    border: 1px solid rgba(240,192,96,.72);
+    width: 27px;
+    height: 27px;
+    border: 1px solid rgba(240, 192, 96, .65);
     border-radius: 999px;
-    background: rgba(240,192,96,.025);
-    box-shadow: 0 0 22px rgba(240,192,96,.18);
+    background: radial-gradient(circle at center,
+      rgba(255, 246, 219, .04),
+      rgba(240, 192, 96, .018) 48%,
+      rgba(240, 192, 96, 0) 70%);
+    box-shadow:
+      0 0 11px rgba(240, 192, 96, .10),
+      inset 0 0 5px rgba(255, 241, 199, .05);
     transform: translate3d(-20px,-20px,0) translate(-50%,-50%);
-    transition: width .18s ease, height .18s ease, border-radius .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease, opacity .18s ease;
-  }
-
-  .lh-cursor-tail {
-    width: 2px;
-    height: 24px;
-    border-radius: 999px;
-    background: linear-gradient(180deg, rgba(240,192,96,.72), rgba(240,192,96,0));
-    transform-origin: 50% 0%;
-    transform: translate3d(-20px,-20px,0) translate(-50%, 2px) rotate(0deg);
-    filter: drop-shadow(0 0 8px rgba(240,192,96,.26));
-    transition: opacity .18s ease;
+    transition:
+      width .16s ease,
+      height .16s ease,
+      border-radius .16s ease,
+      border-color .16s ease,
+      background .16s ease,
+      box-shadow .16s ease,
+      opacity .16s ease;
   }
 
   .lh-cursor-spark {
     width: 0;
-    height: 1px;
+    height: 2px;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(240,192,96,0), rgba(240,192,96,.95), rgba(255,241,195,0));
+    background: linear-gradient(90deg,
+      rgba(240,192,96,0),
+      rgba(255,241,195,.88),
+      rgba(240,192,96,0));
     transform: translate3d(-20px,-20px,0) translate(-50%,-50%) rotate(-18deg);
-    transition: width .18s ease, opacity .18s ease;
+    transition: width .16s ease, opacity .16s ease;
   }
 
+  .lh-cursor-mobius {
+    width: 42px;
+    height: 28px;
+    transform: translate3d(-20px,-20px,0) translate(-50%,-50%);
+    transition: opacity .16s ease;
+  }
+
+  .lh-cursor-mobius svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform-origin: 50% 50%;
+    transform: rotate(var(--lh-mobius-bank, 0deg)) scale(.94);
+    transition: transform .16s ease;
+  }
+
+  .lh-cursor-mobius .mobius-shadow {
+    fill: none;
+    stroke: rgba(98, 58, 0, .42);
+    stroke-width: 7.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: url(#lhMobiusGlow);
+    opacity: .15;
+  }
+
+  .lh-cursor-mobius .mobius-base {
+    fill: none;
+    stroke: url(#lhMobiusGold);
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: .98;
+  }
+
+  .lh-cursor-mobius .mobius-flow {
+    fill: none;
+    stroke: #fff6df;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 8 92;
+    stroke-dashoffset: 0;
+    animation: lhMobiusFlow var(--lh-flow-speed, 1.45s) linear infinite;
+  }
+
+  html.lh-cursor-visible .lh-cursor-trail,
+  html.lh-cursor-visible .lh-cursor-halo,
   html.lh-cursor-visible .lh-cursor-dot,
-  html.lh-cursor-visible .lh-cursor-ring,
-  html.lh-cursor-visible .lh-cursor-tail {
+  html.lh-cursor-visible .lh-cursor-ring {
     opacity: 1;
   }
 
+  html.lh-cursor-hover .lh-cursor-trail {
+    opacity: .7;
+  }
+
+  html.lh-cursor-hover .lh-cursor-halo {
+    width: 62px;
+    height: 62px;
+    opacity: .46;
+  }
+
   html.lh-cursor-hover .lh-cursor-ring {
-    width: 34px;
-    height: 20px;
-    border-radius: 999px;
-    border-color: rgba(240,192,96,.95);
-    background: rgba(240,192,96,.12);
-    box-shadow: 0 0 26px rgba(240,192,96,.28);
+    width: 37px;
+    height: 37px;
+    border-color: rgba(240, 192, 96, .12);
+    background: rgba(240, 192, 96, .012);
+    box-shadow: 0 0 13px rgba(240, 192, 96, .065);
   }
 
   html.lh-cursor-hover .lh-cursor-dot {
-    width: 4px;
-    height: 4px;
-    background: #fff0c4;
+    opacity: 0;
   }
 
   html.lh-cursor-hover .lh-cursor-spark {
     width: 32px;
-    opacity: .85;
+    opacity: .22;
+  }
+
+  html.lh-cursor-hover .lh-cursor-mobius {
+    opacity: 1;
+  }
+
+  html.lh-cursor-hover .lh-cursor-mobius svg {
+    transform: rotate(var(--lh-mobius-bank, 0deg)) scale(1);
+  }
+
+  html.lh-cursor-down .lh-cursor-halo {
+    width: 42px;
+    height: 42px;
   }
 
   html.lh-cursor-down .lh-cursor-ring {
-    width: 18px;
-    height: 18px;
-    background: rgba(240,192,96,.2);
+    width: 20px;
+    height: 20px;
+    background: rgba(240, 192, 96, .12);
   }
 
   html.lh-cursor-down .lh-cursor-dot {
-    width: 9px;
-    height: 9px;
+    width: 8px;
+    height: 8px;
+  }
+
+  html.lh-cursor-down .lh-cursor-mobius svg {
+    transform: rotate(var(--lh-mobius-bank, 0deg)) scale(.92);
+  }
+
+  html.lh-cursor-drag .lh-cursor-mobius {
+    opacity: 0;
+  }
+
+  html.lh-cursor-drag .lh-cursor-halo {
+    width: 60px;
+    height: 60px;
   }
 
   html.lh-cursor-drag .lh-cursor-ring {
     width: 38px;
     height: 38px;
     border-radius: 14px;
-    border-color: rgba(240,192,96,.9);
+    border-color: rgba(240,192,96,.82);
     background:
-      linear-gradient(90deg, transparent 47%, rgba(240,192,96,.22) 48% 52%, transparent 53%),
-      linear-gradient(0deg, transparent 47%, rgba(240,192,96,.22) 48% 52%, transparent 53%),
-      rgba(240,192,96,.08);
+      linear-gradient(90deg,
+        transparent 47%,
+        rgba(240,192,96,.17) 48% 52%,
+        transparent 53%),
+      linear-gradient(0deg,
+        transparent 47%,
+        rgba(240,192,96,.17) 48% 52%,
+        transparent 53%),
+      rgba(240,192,96,.05);
     animation: lhCursorBreathe 1.6s ease-in-out infinite;
   }
 
   html.lh-cursor-drag .lh-cursor-spark {
-    width: 42px;
-    opacity: .7;
+    width: 38px;
+    opacity: .48;
   }
 
+  html.lh-cursor-text .lh-cursor-trail,
+  html.lh-cursor-text .lh-cursor-halo,
   html.lh-cursor-text .lh-cursor-dot,
   html.lh-cursor-text .lh-cursor-ring,
-  html.lh-cursor-text .lh-cursor-tail,
-  html.lh-cursor-text .lh-cursor-spark {
+  html.lh-cursor-text .lh-cursor-spark,
+  html.lh-cursor-text .lh-cursor-mobius {
     opacity: 0 !important;
   }
 }
 
 @keyframes lhCursorBreathe {
-  0%, 100% { box-shadow: 0 0 20px rgba(240,192,96,.16); }
-  50% { box-shadow: 0 0 34px rgba(240,192,96,.38); }
+  0%, 100% { box-shadow: 0 0 14px rgba(240,192,96,.09); }
+  50% { box-shadow: 0 0 22px rgba(240,192,96,.19); }
+}
+
+@keyframes lhMobiusFlow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -100; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lh-cursor-mobius .mobius-flow { animation-duration: 2.6s; }
 }
