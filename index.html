@@ -95,7 +95,7 @@
       </section>
 
       <div class="stat-bar" aria-label="Site statistics">
-        <div class="stat-item"><span class="stat-num">9</span><span class="stat-lbl">Sections</span></div>
+        <div class="stat-item"><span class="stat-num">10</span><span class="stat-lbl">Sections</span></div>
         <div class="stat-item"><span class="stat-num">50+</span><span class="stat-lbl">Topics</span></div>
         <div class="stat-item"><span class="stat-num">4</span><span class="stat-lbl">Visualizations</span></div>
         <div class="stat-item"><span class="stat-num">∞</span><span class="stat-lbl">Growing</span></div>
@@ -103,6 +103,7 @@
 
       <div class="filter-bar" id="filter-bar" aria-label="Topic filters">
         <button class="pill all active" data-filter="all" type="button">All</button>
+        <button class="pill" data-filter="trend" type="button">Trending</button>
         <button class="pill" data-filter="viz" type="button">Visualization</button>
         <button class="pill" data-filter="sim" type="button">Simulator</button>
         <button class="pill" data-filter="theory" type="button">Theory</button>
@@ -121,6 +122,14 @@
 
 <script>
 const SECTIONS = [
+  { name:"Trending", accent:"#22d3ee", trending:true, topics:[
+    {title:"Tau Scaling",desc:"Why frequency scaling broke down and how τ = RC now defines the limits of logic density. The new constraint driving node design at 2nm and beyond.",tags:["theory","trend"],url:"#"},
+    {title:"3D VLSI & Hybrid Bonding",desc:"Stacking dies face-to-face with Cu-Cu bonds at sub-micron pitch. Die-to-wafer, wafer-to-wafer, and the thermal wall you have to climb.",tags:["theory","trend"],url:"#"},
+    {title:"Chiplet Architectures",desc:"UCIe, EMIB, Foveros — how disaggregated silicon and standardized die-to-die interfaces are reshaping SoC design and packaging.",tags:["theory","trend"],url:"#"},
+    {title:"5G / 6G mmWave Systems",desc:"Beamforming arrays, sub-THz propagation, massive MIMO, and the RF front-end challenges pushing silicon into new regimes.",tags:["theory","trend"],url:"#"},
+    {title:"AI Accelerator Architecture",desc:"Systolic arrays, dataflow graphs, sparsity exploitation, and why memory bandwidth — not compute — is the bottleneck in transformer inference.",tags:["theory","trend"],url:"#"},
+    {title:"Neuromorphic Computing",desc:"Spiking neural networks, memristor crossbars, and event-driven architectures that bet on time-encoded spikes over floating-point MAC operations.",tags:["theory","trend"],url:"#"}
+  ]},
   { name:"Power Electronics", accent:"#f0c060", topics:[
     {title:"Power Electronics Hub",desc:"The guided entry point for converters, PFC, and resonant supplies.",tags:["theory"],url:"power-electronics/index.html"},
     {title:"PFC Fundamentals",desc:"Power factor, THD, boost PFC, CrCM/CCM tradeoffs, and EMI intuition.",tags:["theory","viz"],url:"power-electronics/pfc.html"},
@@ -186,7 +195,7 @@ const SECTIONS = [
     {title:"RTL / Digital Interview",desc:"Verilog coding, CDC, timing, and FPGA constraints.",tags:["interview"],url:"#"}
   ]}
 ];
-function tagEl(t){const c={viz:'tag-viz',sim:'tag-sim',theory:'tag-theory',game:'tag-game',interview:'tag-interview'},l={viz:'Viz',sim:'Sim',theory:'Theory',game:'Game',interview:'Interview'};return `<span class="card-tag ${c[t]}">${l[t]}</span>`;}
+function tagEl(t){const c={viz:'tag-viz',sim:'tag-sim',theory:'tag-theory',game:'tag-game',interview:'tag-interview',trend:'tag-trend'},l={viz:'Viz',sim:'Sim',theory:'Theory',game:'Game',interview:'Interview',trend:'Trend'};return `<span class="card-tag ${c[t]||''}">${l[t]||t}</span>`;}
 function renderCards(filter, query){
   const ct=document.getElementById('cards-container');
   ct.innerHTML='';
@@ -195,8 +204,12 @@ function renderCards(filter, query){
     const matches=section.topics.filter(t=>(filter==='all'||t.tags.includes(filter))&&(!sq||t.title.toLowerCase().includes(sq)||t.desc.toLowerCase().includes(sq)||section.name.toLowerCase().includes(sq)));
     if(!matches.length)return;
     const label=document.createElement('div');
-    label.className='section-label';
-    label.textContent=section.name;
+    label.className='section-label' + (section.trending ? ' section-label--trending' : '');
+    if(section.trending){
+      label.innerHTML=`<span class="trending-pulse" aria-hidden="true"></span>${section.name}<span class="trending-tag-label">Updated regularly</span>`;
+    } else {
+      label.textContent=section.name;
+    }
     ct.appendChild(label);
     const grid=document.createElement('div');
     grid.className='topic-grid';

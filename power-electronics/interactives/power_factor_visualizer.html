@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Power factor waveform visualizer</title>
-  <link rel="stylesheet" href="../assets/css/lecturehall.css" />
-  <script defer src="../assets/js/lecturehall-cursor.js"></script>
+  <link rel="stylesheet" href="../../assets/css/lecturehall.css">
+  
   <style>
-    html, body { background: transparent; }
-    body { margin: 0; overflow-x: hidden; }
-    .interactive-shell { min-height: 100%; }
+    html, body { background: transparent; height: auto; overflow: hidden; cursor: none; }
+    body { margin: 0; overflow: hidden; }
+    .interactive-shell { height: auto; }
   </style>
 </head>
 <body class="interactive-page">
@@ -257,5 +257,15 @@ update();
 </script>
 
   </main>
+<script>
+(function(){
+  document.addEventListener('mousemove', function(e){
+    try { window.parent.postMessage({ type:'lh-mousemove', x: e.clientX, y: e.clientY }, '*'); } catch(_){}
+  }, { passive: true });
+  document.addEventListener('mouseleave', function(){
+    try { window.parent.postMessage({ type:'lh-mouseleave' }, '*'); } catch(_){}
+  }, { passive: true });
+})();
+</script>
 </body>
 </html>

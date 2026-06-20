@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Boost inductor position advantage</title>
-  <link rel="stylesheet" href="../assets/css/lecturehall.css" />
-  <script defer src="../assets/js/lecturehall-cursor.js"></script>
+  <link rel="stylesheet" href="../../assets/css/lecturehall.css">
+  
   <style>
-    html, body { background: transparent; }
-    body { margin: 0; overflow-x: hidden; }
-    .interactive-shell { min-height: 100%; }
+    html, body { background: transparent; height: auto; overflow: hidden; cursor: none; }
+    body { margin: 0; overflow: hidden; }
+    .interactive-shell { height: auto; }
   </style>
 </head>
 <body class="interactive-page">
@@ -35,7 +35,7 @@
 <div id="tab-position" class="tab-panel active">
   <div class="card">
     <div style="font-size:13px;font-weight:500;margin-bottom:14px;">Where the inductor sits determines what the input sees</div>
-    <svg width="100%" viewBox="0 0 680 280" role="img">
+    <svg width="100%" viewBox="0 0 680 300" role="img">
       <title>Comparison of boost inductor on input vs buck/flyback inductor on output, showing which current path is smoothed</title>
       <defs>
         <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
@@ -53,7 +53,7 @@
       <!-- Direct wire to switch — NO inductor on input -->
       <line x1="60" y1="80" x2="110" y2="80" stroke="var(--color-text-secondary)" stroke-width="2" fill="none"/>
       <text style="font-size:10px;fill:#ff8a80" x="85" y="72" text-anchor="middle">direct wire</text>
-      <text style="font-size:10px;fill:#ff8a80" x="85" y="100" text-anchor="middle">high dI/dt here!</text>
+      <text style="font-size:10px;fill:#ff8a80" x="85" y="116" text-anchor="middle">high dI/dt here!</text>
 
       <!-- Switch -->
       <rect x="110" y="65" width="40" height="30" rx="5" fill="var(--color-background-tertiary)" stroke="var(--color-text-primary)" stroke-width="1.5"/>
@@ -84,7 +84,7 @@
       <line x1="20" y1="210" x2="300" y2="210" stroke="var(--color-text-tertiary)" stroke-width="0.6" fill="none"/>
       <path d="M20 210 L50 210 L50 170 L90 170 L90 210 L130 210 L130 170 L170 170 L170 210 L210 210 L210 170 L250 170 L250 210 L290 210"
             fill="none" stroke="#ff8a80" stroke-width="2"/>
-      <text style="font-size:9px;fill:#ff8a80" x="160" y="225" text-anchor="middle">Square wave — infinite dI/dt at transitions</text>
+      <text style="font-size:9px;fill:#ff8a80" x="160" y="238" text-anchor="middle">Square wave — infinite dI/dt at transitions</text>
 
       <!-- RIGHT: Boost -->
       <text style="font-size:12px;font-weight:500;fill:#5DCAA5" x="510" y="22" text-anchor="middle">Boost PFC — L on input side</text>
@@ -97,7 +97,7 @@
       <line x1="400" y1="80" x2="420" y2="80" stroke="var(--color-text-secondary)" stroke-width="2" fill="none"/>
       <path d="M420 80 Q427 68 434 80 Q441 68 448 80 Q455 68 462 80 Q469 68 476 80" fill="none" stroke="var(--color-text-primary)" stroke-width="2"/>
       <text style="font-size:10px;fill:#5DCAA5" x="448" y="62" text-anchor="middle">L (input side)</text>
-      <text style="font-size:10px;fill:#5DCAA5" x="448" y="100" text-anchor="middle">smooths input current</text>
+      <text style="font-size:10px;fill:#5DCAA5" x="448" y="116" text-anchor="middle">smooths input current</text>
       <line x1="476" y1="80" x2="510" y2="80" stroke="var(--color-text-secondary)" stroke-width="2" fill="none"/>
 
       <!-- SW node -->
@@ -125,7 +125,7 @@
       <text style="font-size:10px;fill:#5DCAA5" x="500" y="167" text-anchor="middle">Input current seen by source</text>
       <!-- Triangular ripple riding sine envelope -->
       <path id="tri-path" fill="none" stroke="#5DCAA5" stroke-width="2"/>
-      <text style="font-size:9px;fill:#5DCAA5" x="500" y="225" text-anchor="middle">Triangular ripple — finite, controlled dI/dt</text>
+      <text style="font-size:9px;fill:#5DCAA5" x="500" y="238" text-anchor="middle">Triangular ripple — finite, controlled dI/dt</text>
     </svg>
     <script>
     (function(){
@@ -276,5 +276,15 @@ document.getElementById('tab-position').style.display='block';
 </script>
 
   </main>
+<script>
+(function(){
+  document.addEventListener('mousemove', function(e){
+    try { window.parent.postMessage({ type:'lh-mousemove', x: e.clientX, y: e.clientY }, '*'); } catch(_){}
+  }, { passive: true });
+  document.addEventListener('mouseleave', function(){
+    try { window.parent.postMessage({ type:'lh-mouseleave' }, '*'); } catch(_){}
+  }, { passive: true });
+})();
+</script>
 </body>
 </html>

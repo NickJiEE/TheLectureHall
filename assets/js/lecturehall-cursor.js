@@ -348,5 +348,39 @@
     requestTick();
   }, { passive: true });
 
+  // iframes swallow pointermove events so the parent cursor freezes when the mouse
+  // crosses into one. Each interactive iframe posts its local mouse coords back via
+  // postMessage. We translate those local coords into parent-space by offsetting with
+  // the iframe's getBoundingClientRect, then feed them into the normal cursor pipeline.
+  window.addEventListener('message', (event) => {
+    if (!event.data || typeof event.data !== 'object') return;
+    const { type, x, y } = event.data;
+
+    if (type === 'lh-mousemove') {
+      // Find the sending iframe and get its position in the parent viewport.
+      const frames = document.querySelectorAll('iframe');
+      let rect = null;
+      for (const frame of frames) {
+        try {
+          if (frame.contentWindow === event.source) {
+            rect = frame.getBoundingClientRect();
+            break;
+          }
+        } catch (_) {}
+      }
+      mouseX = (rect ? rect.left : 0) + x;
+      mouseY = (rect ? rect.top  : 0) + y;
+      lastMoveTime = performance.now();
+      show();
+      recordPoint(mouseX, mouseY, lastMoveTime);
+      requestTick();
+    }
+
+    if (type === 'lh-mouseleave') {
+      // Mouse exited the iframe — parent pointermove will resume naturally.
+      visible = false;
+    }
+  }, { passive: true });
+
   resizeTrail();
 })();
