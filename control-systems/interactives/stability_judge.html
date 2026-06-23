@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stability Judge · The Lecture Hall</title>
+  <meta name="description" content="A pole-zero plot appears on the s-plane each round — call it stable or unstable before the answer is revealed. Five rounds, scored." />
+  <link rel="stylesheet" href="../../assets/css/lecturehall.css" />
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico" />
+  <script defer src="../../assets/js/lecturehall-cursor.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    .sj-board {
+      background: linear-gradient(180deg, rgba(240,192,96,0.05), rgba(14,17,24,0.72));
+      border: 1px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-md);
+      padding: 16px 18px 20px;
+    }
+
+    .sj-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .sj-round { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-tertiary); }
+    .sj-round b { color: #fff; font-size: 15px; letter-spacing: 0; }
+    .sj-score { font-family: var(--font-mono); font-size: 13px; color: var(--color-text-secondary); }
+    .sj-score b { color: var(--accent-gold); }
+
+    .sj-pips { display: flex; gap: 6px; }
+    .sj-pip {
+      width: 12px; height: 12px; border-radius: 999px;
+      border: 1px solid var(--color-border-secondary); background: rgba(255,255,255,0.03);
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .sj-pip.now { border-color: var(--accent-gold); box-shadow: 0 0 0 3px rgba(240,192,96,0.12); }
+    .sj-pip.ok  { background: var(--accent-teal); border-color: var(--accent-teal); }
+    .sj-pip.bad { background: var(--color-text-danger); border-color: var(--color-text-danger); }
+
+    .sj-plot-wrap {
+      position: relative; width: 100%; max-width: 540px; margin: 0 auto;
+      aspect-ratio: 1 / 1;
+      background: #0b0f17; border: 1px solid var(--color-border-tertiary); border-radius: 10px;
+      overflow: hidden;
+    }
+    #sjPlot { display: block; width: 100%; height: 100%; }
+
+    .sj-overlay {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    }
+    .sj-overlay.show { opacity: 1; }
+    .sj-overlay .mark { font-size: clamp(90px, 26vw, 150px); line-height: 1; font-weight: 700; }
+    .sj-overlay.correct { background: radial-gradient(circle at center, rgba(103,232,200,0.16), transparent 68%); }
+    .sj-overlay.correct .mark { color: var(--accent-teal); text-shadow: 0 0 28px rgba(103,232,200,0.5); }
+    .sj-overlay.incorrect { background: radial-gradient(circle at center, rgba(248,113,113,0.16), transparent 68%); }
+    .sj-overlay.incorrect .mark { color: var(--color-text-danger); text-shadow: 0 0 28px rgba(248,113,113,0.5); }
+
+    .sj-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: center; font-size: 12px; color: var(--color-text-secondary); margin: 14px 0 4px; }
+    .sj-legend .k { display: inline-flex; align-items: center; gap: 7px; }
+    .sj-legend .glyph { font-family: var(--font-mono); font-weight: 700; font-size: 15px; width: 16px; text-align: center; }
+    .sj-legend .pole { color: var(--accent-gold); }
+    .sj-legend .zero { color: var(--accent-teal); }
+
+    .sj-tf { margin: 14px auto 4px; max-width: 540px; text-align: center; }
+    .sj-tf .lbl { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-tertiary); margin-bottom: 8px; }
+    .sj-frac { display: inline-flex; flex-direction: column; align-items: center; font-family: var(--font-mono); color: #f2dba7; font-size: 14px; line-height: 1.5; }
+    .sj-frac .num { padding: 0 12px 4px; }
+    .sj-frac .den { padding: 4px 12px 0; border-top: 1px solid rgba(242,219,167,0.55); }
+    .sj-tf-eq { display: inline-flex; align-items: center; gap: 10px; }
+    .sj-tf-eq .hs { font-family: var(--font-mono); font-size: 14px; color: var(--color-text-secondary); }
+
+    .sj-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 540px; margin: 20px auto 0; }
+    .sj-choice {
+      padding: 16px 14px; border-radius: 10px; cursor: pointer;
+      font-family: var(--font-mono); font-size: 15px; font-weight: 600; letter-spacing: 0.04em;
+      background: transparent; border: 1px solid; transition: background 0.18s, color 0.18s, border-color 0.18s, transform 0.12s;
+    }
+    .sj-choice:hover { transform: translateY(-1px); }
+    .sj-choice:disabled { cursor: default; opacity: 0.55; transform: none; }
+    .sj-choice.stable { color: var(--accent-teal); border-color: rgba(103,232,200,0.45); }
+    .sj-choice.stable:hover:not(:disabled) { background: var(--accent-teal); color: #06281f; border-color: var(--accent-teal); }
+    .sj-choice.unstable { color: var(--color-text-danger); border-color: rgba(248,113,113,0.45); }
+    .sj-choice.unstable:hover:not(:disabled) { background: var(--color-text-danger); color: #2a0b0b; border-color: var(--color-text-danger); }
+    .sj-choice .sub { display: block; font-family: var(--font-sans); font-size: 11px; font-weight: 400; letter-spacing: 0; margin-top: 5px; color: var(--color-text-tertiary); }
+
+    .sj-result { display: none; max-width: 540px; margin: 18px auto 0; border: 1px solid; border-radius: 10px; padding: 16px 18px; }
+    .sj-result.show { display: block; }
+    .sj-result.correct { border-color: rgba(103,232,200,0.42); background: rgba(103,232,200,0.07); }
+    .sj-result.incorrect { border-color: rgba(248,113,113,0.42); background: rgba(248,113,113,0.08); }
+    .sj-result .verdict { font-family: var(--font-mono); font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .sj-result.correct .verdict { color: var(--accent-teal); }
+    .sj-result.incorrect .verdict { color: var(--color-text-danger); }
+    .sj-result .explain { color: var(--color-text-secondary); font-size: 13px; line-height: 1.6; }
+    .sj-result .explain b.ans { color: #fff; }
+    .sj-result-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+    .sj-final { display: none; max-width: 540px; margin: 0 auto; text-align: center; padding: 18px 4px; }
+    .sj-final.show { display: block; }
+    .sj-final .big { font-family: var(--font-mono); font-size: 44px; font-weight: 700; color: #fff; line-height: 1.1; }
+    .sj-final .big span { color: var(--accent-gold); }
+    .sj-final .msg { color: var(--color-text-secondary); font-size: 14px; margin: 8px 0 22px; }
+    .sj-final .sj-pips { justify-content: center; margin: 16px 0 4px; }
+  </style>
+</head>
+<body class="lh-page">
+  <div class="page-shell">
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="brand-lockup" href="../../index.html#main">
+        <img class="brand-icon" src="../../image/icon.png" alt="The Lecture Hall" width="54" height="34" decoding="async" />
+        <div>
+          <div class="nav-brand">The <span>Lecture</span> Hall</div>
+          <div class="nav-sub">Control Systems · Stability Judge</div>
+        </div>
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html#main">Index</a>
+        <a href="pid_controller.html">PID Controller</a>
+        <a href="stability_judge.html" class="active">Stability Judge</a>
+      </div>
+    </nav>
+
+    <div class="breadcrumbs"><a href="../../index.html#main">Index</a><span>/</span><span>Control Systems</span><span>/</span><span>Stability Judge</span></div>
+
+    <header class="topic-header">
+      <div class="kicker">Control Systems · Game</div>
+      <h1>Call it: stable or <span>unstable</span>?</h1>
+      <p>A pole-zero plot of a system is generated on the s-plane each round. Decide whether the system they define is stable or unstable.</p>
+      <div class="topic-meta">
+        <span>s-plane</span><span>Pole–zero plot</span><span>Stability</span>
+      </div>
+    </header>
+
+    <section class="content-section" id="rule">
+      <h2>The one rule</h2>
+      <div class="content-card">
+        <p>A continuous-time linear system is <strong>stable</strong> exactly when every pole of its transfer function sits in the open left half of the s-plane — that is, when each pole has a strictly negative real part:</p>
+        <div class="equation-box">\[ \text{stable} \iff \operatorname{Re}(p_i) < 0 \quad \text{for every pole } p_i \]</div>
+        <p>Poles are drawn as <strong>×</strong>, zeros as <strong>○</strong>. The horizontal axis is the real part \( \sigma \); the vertical axis is the imaginary part \( j\omega \). Complex poles always arrive as conjugate pairs, mirrored above and below the real axis at \( \sigma \pm j\omega \). <strong>Only the poles decide stability</strong> — zeros shape the response, but a zero in the right half-plane never makes a system unstable. A pole sitting exactly on the imaginary axis (\( \sigma = 0 \)) is marginal, and we count that as unstable here.</p>
+      </div>
+    </section>
+
+    <section class="content-section" id="game">
+      <h2>The game</h2>
+
+      <div class="sj-board">
+        <div class="sj-head">
+          <div class="sj-round">Round <b id="sjRound">1</b> / <span id="sjRoundTotal">5</span></div>
+          <div class="sj-pips" id="sjPips" aria-hidden="true"></div>
+          <div class="sj-score">Score <b id="sjScore">0</b></div>
+        </div>
+
+        <div id="sjGame">
+          <div class="sj-plot-wrap">
+            <canvas id="sjPlot" role="img" aria-label="Pole-zero plot on the s-plane for the current round"></canvas>
+            <div class="sj-overlay" id="sjOverlay"><span class="mark" id="sjMark"></span></div>
+          </div>
+
+          <div class="sj-legend">
+            <span class="k"><span class="glyph pole">×</span> Pole</span>
+            <span class="k"><span class="glyph zero">○</span> Zero</span>
+          </div>
+
+          <div class="sj-tf" id="sjTf"></div>
+
+          <div class="sj-choices" id="sjChoices">
+            <button class="sj-choice stable" id="sjStable" type="button">Stable</button>
+            <button class="sj-choice unstable" id="sjUnstable" type="button">Unstable</button>
+          </div>
+
+          <div class="sj-result" id="sjResult" aria-live="polite">
+            <div class="verdict" id="sjVerdict"></div>
+            <div class="explain" id="sjExplain"></div>
+            <div class="sj-result-foot">
+              <button class="lh-button" id="sjNext" type="button">Next problem →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sj-final" id="sjFinal">
+          <div class="big">You scored <span id="sjFinalScore">0</span> / <span id="sjFinalTotal">5</span></div>
+          <div class="sj-pips" id="sjFinalPips" aria-hidden="true"></div>
+          <div class="msg" id="sjFinalMsg"></div>
+          <button class="lh-button" id="sjRestart" type="button">Play again ↺</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section" id="read">
+      <h2>How to read the plot</h2>
+      <div class="content-card">
+        <p>Sweep your eye from left to right and stop at the imaginary axis. Everything in the shaded right half is the danger zone.</p>
+        <ul>
+          <li><strong>Ignore the zeros.</strong> A zero (○) can sit anywhere — far right, on the axis, doesn't matter. It bends the shape of the response but never destabilises it. Train yourself to look past them.</li>
+          <li><strong>Scan the poles (×).</strong> If <em>every</em> × is strictly to the left of the vertical axis, the system is stable. The moment one × lands on the axis or to its right, it's unstable.</li>
+          <li><strong>Conjugate pairs move together.</strong> A complex pole and its mirror image share the same horizontal position, so they cross into the right half-plane at the same instant. Checking the top one tells you about the bottom one.</li>
+          <li><strong>The axis itself counts as unstable.</strong> A pole at \( \sigma = 0 \) gives a response that neither grows nor decays — undamped oscillation or a pure integrator. That's marginal, not stable.</li>
+        </ul>
+        <div class="note">After you answer, any pole that breaks the rule is ringed in red so you can see exactly what tipped the system over. The factored transfer function under the plot shows the same poles and zeros algebraically — the denominator's roots are the poles you're judging.</div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <a href="../../index.html#main">← Back to The Lecture Hall</a>
+    </footer>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+    const ROUNDS = 10;
+
+    // ---- Random generation ----------------------------------------------
+    // Round to the nearest 0.5 so every coordinate lands on a clean half-grid.
+    const round2 = x => Math.round(x * 2) / 2;
+    // A real coordinate anywhere on the axis, -5..5 in 0.5 steps.
+    const randCoord = () => round2(Math.random() * 10 - 5);
+    // The imaginary part of a conjugate pair: strictly positive, 0.5..5.
+    const randImag  = () => round2(0.5 + Math.random() * 4.5);
+
+    // One "item" is a pole or a zero, contributed either as a single real
+    // point or as a conjugate pair (two mirrored points). 1..4 items per round.
+    function buildItems() {
+      const n = 1 + Math.floor(Math.random() * 4);
+      const items = [];
+      for (let i = 0; i < n; i++) {
+        const kind = Math.random() < 0.5 ? 'pole' : 'zero';
+        const re = randCoord();
+        if (Math.random() < 0.5) items.push({ kind, form: 'real', re, im: 0 });
+        else items.push({ kind, form: 'pair', re, im: randImag() });
+      }
+      return items;
+    }
+
+    // Expand an item list into the raw points of one kind.
+    function pointsOf(items, kind) {
+      const pts = [];
+      items.filter(it => it.kind === kind).forEach(it => {
+        if (it.form === 'real') pts.push({ re: it.re, im: 0 });
+        else { pts.push({ re: it.re, im: it.im }); pts.push({ re: it.re, im: -it.im }); }
+      });
+      return pts;
+    }
+
+    // Two points coincide if they share the same coordinate; overlapping markers
+    // (and pole–zero cancellations) make the plot ambiguous, so we reject them.
+    function hasCoincidence(pts) {
+      const seen = new Set();
+      for (const p of pts) {
+        const key = p.re + ',' + p.im;
+        if (seen.has(key)) return true;
+        seen.add(key);
+      }
+      return false;
+    }
+
+    function generateRound() {
+      for (let tries = 0; tries < 200; tries++) {
+        const items = buildItems();
+        const poles = pointsOf(items, 'pole');
+        const zeros = pointsOf(items, 'zero');
+        // Need at least one pole for "stability" to mean anything, and no two
+        // markers may land on the same spot.
+        if (poles.length === 0) continue;
+        if (hasCoincidence(poles.concat(zeros))) continue;
+        return { items, poles, zeros, stable: poles.every(p => p.re < 0) };
+      }
+      // Fallback that can't fail: a single guaranteed-stable real pole.
+      const items = [{ kind: 'pole', form: 'real', re: -2, im: 0 }];
+      return { items, poles: [{ re: -2, im: 0 }], zeros: [], stable: true };
+    }
+
+    // ---- Transfer function readout --------------------------------------
+    const MINUS = '−';
+    function fmt(n) {
+      const r = Math.round(n * 100) / 100;
+      return Object.is(r, -0) ? '0' : String(r);
+    }
+    function factorOf(it) {
+      if (it.form === 'real') {
+        if (it.re === 0) return 's';
+        return it.re > 0 ? `(s ${MINUS} ${fmt(it.re)})` : `(s + ${fmt(-it.re)})`;
+      }
+      // Conjugate pair (s - (re+jw))(s - (re-jw)) = s^2 - 2·re·s + (re^2 + w^2)
+      const a = -2 * it.re, b = it.re * it.re + it.im * it.im;
+      let f = 's²';
+      if (a > 0) f += ` + ${fmt(a)}s`;
+      else if (a < 0) f += ` ${MINUS} ${fmt(-a)}s`;
+      f += ` + ${fmt(b)}`;
+      return `(${f})`;
+    }
+    function renderTf(items) {
+      const num = items.filter(i => i.kind === 'zero').map(factorOf).join('');
+      const den = items.filter(i => i.kind === 'pole').map(factorOf).join('');
+      document.getElementById('sjTf').innerHTML =
+        '<div class="lbl">Transfer function</div>' +
+        '<div class="sj-tf-eq"><span class="hs">H(s) =</span>' +
+        '<span class="sj-frac"><span class="num">' + (num || '1') + '</span>' +
+        '<span class="den">' + den + '</span></span></div>';
+    }
+
+    // ---- s-plane canvas --------------------------------------------------
+    const canvas = document.getElementById('sjPlot');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0;
+    const LIM = 5;
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      W = rect.width; H = rect.height;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      draw();
+    }
+
+    function geom() {
+      const padL = 30, padR = 14, padT = 14, padB = 26;
+      const x0 = padL, x1 = W - padR, y0 = padT, y1 = H - padB;
+      return {
+        x0, x1, y0, y1,
+        sx: re => x0 + (re + LIM) / (2 * LIM) * (x1 - x0),
+        sy: im => y0 + (LIM - im) / (2 * LIM) * (y1 - y0)
+      };
+    }
+
+    function draw() {
+      if (!W) return;
+      const g = geom();
+      ctx.clearRect(0, 0, W, H);
+
+      // Integer grid.
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.beginPath();
+      for (let i = -LIM; i <= LIM; i++) {
+        ctx.moveTo(g.sx(i), g.y0); ctx.lineTo(g.sx(i), g.y1);
+        ctx.moveTo(g.x0, g.sy(i)); ctx.lineTo(g.x1, g.sy(i));
+      }
+      ctx.stroke();
+
+      // Real (sigma) axis.
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      ctx.beginPath(); ctx.moveTo(g.x0, g.sy(0)); ctx.lineTo(g.x1, g.sy(0)); ctx.stroke();
+
+      // Imaginary (jw) axis — the stability boundary.
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(g.sx(0), g.y0); ctx.lineTo(g.sx(0), g.y1); ctx.stroke();
+
+      // Tick labels + axis titles.
+      ctx.fillStyle = '#8fa1b7';
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      for (let i = -LIM; i <= LIM; i++) if (i !== 0) ctx.fillText(i, g.sx(i), g.y1 + 6);
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      for (let i = -LIM; i <= LIM; i++) if (i !== 0) ctx.fillText(i, g.x0 - 6, g.sy(i));
+      ctx.fillStyle = '#c6d1df';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+      ctx.fillText('σ', g.x1 - 2, g.sy(0) + 6);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('jω', g.sx(0) + 6, g.y0 + 2);
+
+      if (!current) return;
+
+      // Zeros (circles), then poles (crosses) on top.
+      ctx.lineCap = 'round';
+      current.zeros.forEach(p => {
+        const x = g.sx(p.re), y = g.sy(p.im), r = 6.5;
+        ctx.strokeStyle = '#67e8c8'; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+      });
+      current.poles.forEach(p => {
+        const x = g.sx(p.re), y = g.sy(p.im), r = 7;
+        const bad = revealed && p.re >= 0;
+        if (bad) {
+          ctx.fillStyle = 'rgba(248,113,113,0.18)';
+          ctx.beginPath(); ctx.arc(x, y, r + 6, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = 'rgba(248,113,113,0.85)'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(x, y, r + 6, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.strokeStyle = bad ? '#f87171' : '#f0c060';
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.moveTo(x - r, y - r); ctx.lineTo(x + r, y + r);
+        ctx.moveTo(x - r, y + r); ctx.lineTo(x + r, y - r);
+        ctx.stroke();
+      });
+    }
+
+    // ---- Game state ------------------------------------------------------
+    let current = null, revealed = false, answered = false;
+    let round = 1, score = 0;
+    const results = new Array(ROUNDS).fill(null); // true=correct, false=wrong
+
+    const els = {
+      round:   document.getElementById('sjRound'),
+      roundTotal: document.getElementById('sjRoundTotal'),
+      score:   document.getElementById('sjScore'),
+      pips:    document.getElementById('sjPips'),
+      game:    document.getElementById('sjGame'),
+      choices: document.getElementById('sjChoices'),
+      stable:  document.getElementById('sjStable'),
+      unstable:document.getElementById('sjUnstable'),
+      result:  document.getElementById('sjResult'),
+      verdict: document.getElementById('sjVerdict'),
+      explain: document.getElementById('sjExplain'),
+      next:    document.getElementById('sjNext'),
+      overlay: document.getElementById('sjOverlay'),
+      mark:    document.getElementById('sjMark'),
+      final:   document.getElementById('sjFinal'),
+      finalScore: document.getElementById('sjFinalScore'),
+      finalTotal: document.getElementById('sjFinalTotal'),
+      finalPips:  document.getElementById('sjFinalPips'),
+      finalMsg:   document.getElementById('sjFinalMsg'),
+      restart: document.getElementById('sjRestart')
+    };
+
+    function renderPips(container) {
+      container.innerHTML = '';
+      for (let i = 0; i < ROUNDS; i++) {
+        const pip = document.createElement('span');
+        pip.className = 'sj-pip';
+        if (results[i] === true) pip.classList.add('ok');
+        else if (results[i] === false) pip.classList.add('bad');
+        else if (i === round - 1 && container === els.pips && !showingFinal) pip.classList.add('now');
+        container.appendChild(pip);
+      }
+    }
+
+    let showingFinal = false;
+
+    function startRound() {
+      showingFinal = false;
+      current = generateRound();
+      revealed = false;
+      answered = false;
+
+      els.round.textContent = round;
+      els.score.textContent = score;
+      renderPips(els.pips);
+      renderTf(current.items);
+
+      els.final.classList.remove('show');
+      els.game.style.display = '';
+      els.result.classList.remove('show', 'correct', 'incorrect');
+      els.choices.style.display = '';
+      els.stable.disabled = false;
+      els.unstable.disabled = false;
+      els.overlay.classList.remove('show', 'correct', 'incorrect');
+
+      draw();
+    }
+
+    function answer(guessStable) {
+      if (answered) return;
+      answered = true;
+      revealed = true;
+
+      const correct = guessStable === current.stable;
+      results[round - 1] = correct;
+      if (correct) { score++; els.score.textContent = score; }
+      renderPips(els.pips);
+
+      // Reveal overlay + offending poles.
+      els.mark.textContent = correct ? '✓' : '✗';
+      els.overlay.classList.add('show', correct ? 'correct' : 'incorrect');
+      draw();
+
+      const bad = current.poles.filter(p => p.re >= 0).length;
+      const truth = current.stable ? 'Stable' : 'Unstable';
+      let why;
+      if (current.stable) {
+        why = 'Every pole sits in the left half-plane (σ &lt; 0), so the response decays.';
+      } else {
+        const onAxis = current.poles.some(p => p.re === 0);
+        why = bad + (bad === 1 ? ' pole lies' : ' poles lie') +
+              ' on or right of the imaginary axis (σ ≥ 0)' +
+              (onAxis ? ', so the response never settles.' : ', so the response grows without bound.');
+      }
+
+      els.choices.style.display = 'none';
+      els.stable.disabled = true;
+      els.unstable.disabled = true;
+      els.verdict.textContent = correct ? '✓ Correct' : '✗ Incorrect';
+      els.explain.innerHTML = 'This system is <b class="ans">' + truth + '</b>. ' + why;
+      els.result.classList.add('show', correct ? 'correct' : 'incorrect');
+      els.next.textContent = round >= ROUNDS ? 'See results →' : 'Next problem →';
+    }
+
+    function next() {
+      if (round >= ROUNDS) { showFinal(); return; }
+      round++;
+      startRound();
+    }
+
+    function showFinal() {
+      showingFinal = true;
+      els.game.style.display = 'none';
+      els.finalScore.textContent = score;
+      renderPips(els.pips);
+      renderPips(els.finalPips);
+      let msg;
+      if (score === ROUNDS) msg = 'Flawless — you read the s-plane like a textbook.';
+      else if (score >= 4) msg = 'Sharp eye. The imaginary axis holds no secrets for you.';
+      else if (score >= 3) msg = 'Solid. Keep watching that boundary at σ = 0.';
+      else if (score >= 1) msg = 'Getting there — remember, only the poles (×) matter.';
+      else msg = 'Stability is all in the poles. Ignore the zeros and scan left of the axis.';
+      els.finalMsg.textContent = msg;
+      els.final.classList.add('show');
+    }
+
+    function restart() {
+      round = 1; score = 0;
+      for (let i = 0; i < ROUNDS; i++) results[i] = null;
+      startRound();
+    }
+
+    // ---- Wiring ----------------------------------------------------------
+    els.stable.addEventListener('click', () => answer(true));
+    els.unstable.addEventListener('click', () => answer(false));
+    els.next.addEventListener('click', next);
+    els.restart.addEventListener('click', restart);
+    window.addEventListener('resize', resize);
+
+    els.roundTotal.textContent = ROUNDS;  // fixed totals derived from ROUNDS
+    els.finalTotal.textContent = ROUNDS;
+    resize();      // sizes the canvas
+    startRound();  // first problem
+  })();
+  </script>
+</body>
+</html>
