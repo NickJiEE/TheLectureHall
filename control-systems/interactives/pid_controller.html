@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PID Controller · The Lecture Hall</title>
+  <meta name="description" content="Tune a PID controller on a second-order plant and watch the step response. Live overshoot, rise time, and settling time." />
+  <link rel="stylesheet" href="../../assets/css/lecturehall.css" />
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico" />
+  <script defer src="../../assets/js/lecturehall-cursor.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    .pid-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin: 6px 0 18px; }
+    .pid-card {
+      background: linear-gradient(180deg, rgba(240,192,96,0.05), rgba(14,17,24,0.72));
+      border: 1px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-md);
+      padding: 14px 16px;
+    }
+    .pid-card.plant { --slider-accent: var(--accent-gold); }
+    .pid-card.controller { --slider-accent: var(--accent-teal); }
+    .pid-card-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--color-text-tertiary);
+      margin-bottom: 10px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--color-border-tertiary);
+    }
+    .pid-card-head b { color: #fff; font-weight: 600; letter-spacing: 0; text-transform: none; font-size: 14px; }
+    .pid-row { display: grid; grid-template-columns: 40px 1fr 62px; align-items: center; gap: 12px; margin: 11px 0; }
+    .pid-row label { font-family: var(--font-mono); font-size: 14px; color: var(--color-text-secondary); }
+    .pid-row input[type=range] { width: 100%; accent-color: var(--slider-accent); height: 4px; cursor: pointer; }
+    .pid-row output { font-family: var(--font-mono); font-size: 13px; color: var(--slider-accent); text-align: right; }
+
+    .pid-presets { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+    .pid-presets .preset-lbl { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; margin-right: 2px; }
+
+    .pid-plot-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+    .pid-status { font-family: var(--font-mono); font-size: 12px; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+    .pid-status.ok  { color: var(--accent-teal); border-color: rgba(103,232,200,0.42); background: rgba(103,232,200,0.09); }
+    .pid-status.bad { color: var(--color-text-danger); border-color: rgba(248,113,113,0.42); background: rgba(248,113,113,0.11); }
+
+    .pid-chart-wrap {
+      position: relative; width: 100%; height: 360px;
+      background: #0b0f17; border: 1px solid var(--color-border-tertiary);
+      border-radius: 10px; padding: 12px 12px 8px;
+    }
+    .pid-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 12px; color: var(--color-text-secondary); margin: 12px 0 4px; }
+    .pid-legend .k { display: inline-flex; align-items: center; gap: 6px; }
+    .pid-swatch { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+    .pid-swatch.dash { background: repeating-linear-gradient(90deg, currentColor 0 5px, transparent 5px 9px); height: 2px; }
+    .pid-toggle { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; cursor: pointer; color: var(--color-text-secondary); font-family: var(--font-mono); font-size: 12px; }
+    .pid-toggle input { accent-color: var(--accent-purple); cursor: pointer; }
+
+    .pid-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
+    .pid-metric { background: var(--color-background-secondary); border: 1px solid var(--color-border-tertiary); border-radius: 10px; padding: 12px 14px; }
+    .pid-metric .lbl { font-size: 11px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .pid-metric .val { font-family: var(--font-mono); font-size: 21px; font-weight: 600; color: #fff; line-height: 1.1; }
+    .pid-metric .sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
+  </style>
+</head>
+<body class="lh-page">
+  <div class="page-shell">
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="brand-lockup" href="../../index.html#main">
+        <img class="brand-icon" src="../../image/icon.png" alt="The Lecture Hall" width="54" height="34" decoding="async" />
+        <div>
+          <div class="nav-brand">The <span>Lecture</span> Hall</div>
+          <div class="nav-sub">Control Systems · PID Controller</div>
+        </div>
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html#main">Index</a>
+        <a href="pid_controller.html" class="active">PID Controller</a>
+      </div>
+    </nav>
+
+    <div class="breadcrumbs"><a href="../../index.html#main">Index</a><span>/</span><span>Control Systems</span><span>/</span><span>PID Controller</span></div>
+
+    <header class="topic-header">
+      <div class="kicker">Control Systems</div>
+      <h1>Tune the loop until the response <span>behaves</span>.</h1>
+      <p>A PID controller watches the error between where you asked the system to go and where it actually is, then drives it with a weighted blend of that error, its accumulated history, and its rate of change. The plant below is a canonical second-order system — a mass–spring–damper, a motor position loop, an RLC circuit. Move the sliders and watch the unit-step response form in real time.</p>
+      <div class="topic-meta">
+        <span>Second-order plant</span><span>PID</span><span>Step response</span><span>Overshoot / settling</span>
+      </div>
+    </header>
+
+    <section class="content-section" id="model">
+      <h2>The model</h2>
+      <div class="content-card">
+        <p>The plant is the standard second-order form, with natural frequency \( \omega_n \) and damping ratio \( \zeta \):</p>
+        <div class="equation-box">\[ \ddot{y} + 2\zeta\omega_n\,\dot{y} + \omega_n^2\,y = \omega_n^2\,u \]</div>
+        <p>Choosing the state variables \( x_1 = y \) and \( x_2 = \dot{y} \) turns that single second-order equation into two first-order equations the integrator can march forward:</p>
+        <div class="equation-box">\[ \dot{x}_1 = x_2, \qquad \dot{x}_2 = -2\zeta\omega_n\,x_2 - \omega_n^2\,x_1 + \omega_n^2\,u, \qquad y = x_1 \]</div>
+        <p>The reference is a unit step, \( r = 1 \). The controller acts on the error \( e = r - y \) with three terms — proportional, integral, and derivative:</p>
+        <div class="equation-box">\[ u(t) = K_p\,e \;+\; K_i\!\int_0^{t} e\,d\tau \;+\; K_d\,\frac{de}{dt} \]</div>
+      </div>
+    </section>
+
+    <section class="content-section" id="lab">
+      <h2>Interactive: tune the PID loop</h2>
+
+      <div class="pid-presets">
+        <span class="preset-lbl">Presets</span>
+        <button class="pill" type="button" data-preset="sluggish">Sluggish (P-only)</button>
+        <button class="pill" type="button" data-preset="underdamped">Underdamped</button>
+        <button class="pill" type="button" data-preset="tuned">Tuned PID</button>
+        <button class="pill" type="button" data-preset="unstable">Unstable</button>
+        <button class="pill" type="button" data-preset="reset">Reset</button>
+      </div>
+
+      <div class="pid-controls">
+        <div class="pid-card plant">
+          <div class="pid-card-head"><b>Plant</b><span>2nd-order</span></div>
+          <div class="pid-row">
+            <label for="wn">&omega;<sub>n</sub></label>
+            <input type="range" id="wn" min="0.5" max="20" step="0.1" value="4" />
+            <output id="wnVal">4.0</output>
+          </div>
+          <div class="pid-row">
+            <label for="zeta">&zeta;</label>
+            <input type="range" id="zeta" min="0" max="2" step="0.01" value="0.4" />
+            <output id="zetaVal">0.40</output>
+          </div>
+        </div>
+
+        <div class="pid-card controller">
+          <div class="pid-card-head"><b>Controller</b><span>PID gains</span></div>
+          <div class="pid-row">
+            <label for="kp">K<sub>p</sub></label>
+            <input type="range" id="kp" min="0" max="50" step="0.1" value="6" />
+            <output id="kpVal">6.0</output>
+          </div>
+          <div class="pid-row">
+            <label for="ki">K<sub>i</sub></label>
+            <input type="range" id="ki" min="0" max="50" step="0.1" value="4" />
+            <output id="kiVal">4.0</output>
+          </div>
+          <div class="pid-row">
+            <label for="kd">K<sub>d</sub></label>
+            <input type="range" id="kd" min="0" max="20" step="0.05" value="0.6" />
+            <output id="kdVal">0.60</output>
+          </div>
+        </div>
+      </div>
+
+      <div class="pid-plot-head">
+        <strong style="color:#fff;font-size:14px;">Step response</strong>
+        <span id="pidStatus" class="pid-status ok">Stable</span>
+      </div>
+
+      <div class="pid-chart-wrap">
+        <canvas id="pidChart" role="img" aria-label="Step response of the closed-loop system over ten seconds"></canvas>
+      </div>
+
+      <div class="pid-legend">
+        <span class="k" style="color:#67e8c8;"><span class="pid-swatch" style="background:#67e8c8;"></span>Output y(t)</span>
+        <span class="k" style="color:#f0c060;"><span class="pid-swatch dash"></span>Reference r = 1</span>
+        <span class="k" style="color:#8fa1b7;"><span class="pid-swatch" style="background:rgba(103,232,200,0.22);height:10px;border-radius:2px;"></span>&plusmn;2% band</span>
+        <label class="pid-toggle"><input type="checkbox" id="showU" /> Control effort u(t)</label>
+      </div>
+
+      <div class="pid-metrics">
+        <div class="pid-metric">
+          <div class="lbl">Overshoot</div>
+          <div class="val" id="mOvershoot" style="color:var(--accent-orange);">—</div>
+          <div class="sub">peak above setpoint</div>
+        </div>
+        <div class="pid-metric">
+          <div class="lbl">Rise time (0&rarr;90%)</div>
+          <div class="val" id="mRise" style="color:var(--accent-teal);">—</div>
+          <div class="sub">first reach y = 0.9</div>
+        </div>
+        <div class="pid-metric">
+          <div class="lbl">Settling (&plusmn;2%)</div>
+          <div class="val" id="mSettle" style="color:var(--accent-gold);">—</div>
+          <div class="sub">stays inside the band</div>
+        </div>
+        <div class="pid-metric">
+          <div class="lbl">Steady-state error</div>
+          <div class="val" id="mSse" style="color:var(--accent-purple);">—</div>
+          <div class="sub">residual gap at t = 10 s</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section" id="read">
+      <h2>How to read it</h2>
+      <div class="content-card">
+        <p><strong>Proportional \( K_p \)</strong> pushes harder the further you are from target — it speeds up the response but, on its own, leaves a steady-state error and eventually causes ringing. <strong>Integral \( K_i \)</strong> accumulates past error, so it erases that steady-state gap, but too much of it winds up and provokes overshoot. <strong>Derivative \( K_d \)</strong> reacts to how fast the error is closing, adding damping that tames overshoot and oscillation at the cost of sensitivity to noise.</p>
+        <ul>
+          <li><strong>Sluggish (P-only):</strong> small \( K_p \), no \( K_i \) — the output crawls toward the setpoint and stops short. The steady-state error is exactly \( 1/(1+K_p) \).</li>
+          <li><strong>Underdamped:</strong> large \( K_p \) with little damping — a fast but bouncy response with large overshoot and a long settling time.</li>
+          <li><strong>Tuned PID:</strong> a balanced set of gains — fast rise, small overshoot, zero steady-state error.</li>
+          <li><strong>Unstable:</strong> push \( K_i \) high against a fast, lightly damped plant and the poles cross into the right half-plane — the response flies off the top of the chart and the status flips to <em>Unstable</em>.</li>
+        </ul>
+        <div class="note">There is no single "best" tuning. You determine the trade-offs that best fit your application the most regarding rise time, overshoot, settling time, control effort, or noise rejection. The sliders let you feel where one improves only by sacrificing another.</div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <a href="../../index.html#main">← Back to The Lecture Hall</a>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script>
+  (function () {
+    const T = 10;          // total sim time (s)
+    const dt = 0.005;      // step size (s) -> 2000 steps, 2001 samples
+    const N = Math.round(T / dt);
+
+    const DEFAULTS = { wn: 4, zeta: 0.4, kp: 6, ki: 4, kd: 0.6 };
+    const PRESETS = {
+      sluggish:    { wn: 2,  zeta: 1.0,  kp: 3,  ki: 0,  kd: 0   },
+      underdamped: { wn: 5,  zeta: 0.2,  kp: 22, ki: 0,  kd: 0   },
+      tuned:       { wn: 4,  zeta: 0.5,  kp: 9,  ki: 5,  kd: 1.0 },
+      unstable:    { wn: 8,  zeta: 0.1,  kp: 2,  ki: 40, kd: 0   },
+      reset:       Object.assign({}, DEFAULTS)
+    };
+
+    const ids = ['wn', 'zeta', 'kp', 'ki', 'kd'];
+    const el = {};
+    ids.forEach(id => { el[id] = document.getElementById(id); el[id + 'Val'] = document.getElementById(id + 'Val'); });
+    const decimals = { wn: 1, zeta: 2, kp: 1, ki: 1, kd: 2 };
+
+    function readParams() {
+      const p = {};
+      ids.forEach(id => { p[id] = parseFloat(el[id].value); });
+      return p;
+    }
+
+    // Continuous closed-loop dynamics as an augmented 3rd-order system. States:
+    //   x1 = y,  x2 = y_dot,  x3 = integral of the error e = r - y  (r = 1).
+    // Because r is constant the error derivative is exact, de/dt = -x2, so the PID
+    // control needs no finite difference (and has no derivative kick):
+    //   u = Kp*(1 - x1) + Ki*x3 - Kd*x2.
+    // This system's characteristic polynomial is exactly the cubic in charCoeffs()
+    // below, so the simulated response and the stability tag can never disagree.
+    function closedLoop(s, p) {
+      const { wn, zeta, kp, ki, kd } = p;
+      const u = kp * (1 - s.x1) + ki * s.x3 - kd * s.x2;
+      return {
+        d1: s.x2,
+        d2: -2 * zeta * wn * s.x2 - wn * wn * s.x1 + wn * wn * u,
+        d3: 1 - s.x1
+      };
+    }
+
+    // Analytical stability of the closed loop. With the plant
+    //   G(s) = wn^2 / (s^2 + 2*zeta*wn*s + wn^2)
+    // and the PID controller C(s) = Kp + Ki/s + Kd*s, the closed-loop
+    function charCoeffs(p) {
+      const { wn, zeta, kp, ki, kd } = p;
+      return {
+        a2: 2 * zeta * wn + wn * wn * kd,
+        a1: wn * wn * (1 + kp),
+        a0: wn * wn * ki
+      };
+    }
+    // Routh-Hurwitz for a monic cubic: every coefficient positive AND a2*a1 > a0.
+    function isStable(p) {
+      const { a2, a1, a0 } = charCoeffs(p);
+      return a2 > 0 && a1 > 0 && a0 >= 0 && a2 * a1 > a0;
+    }
+
+    function simulate(p) {
+      const { kp, ki, kd } = p;
+      let x1 = 0, x2 = 0, x3 = 0;
+      const yData = new Array(N + 1);
+      const uData = new Array(N + 1);
+      let overflow = false;
+
+      // Fine step h = dt / M keeps RK4 accurate for stiff (fast or high-gain)
+      // loops; M = 1 for ordinary tunings, i.e. exactly dt = 5 ms.
+      const { a2, a1 } = charCoeffs(p);
+      const lambda = a2 + Math.sqrt(Math.max(a1, 0));
+      const M = Math.min(64, Math.max(1, Math.ceil(lambda * dt / 2)));
+      const h = dt / M;
+
+      for (let k = 0; k <= N * M; k++) {
+        if (k % M === 0) {            // record one sample per dt
+          const idx = k / M;
+          yData[idx] = x1;
+          uData[idx] = kp * (1 - x1) + ki * x3 - kd * x2;
+        }
+        if (!isFinite(x1) || Math.abs(x1) > 1e6) { overflow = true; break; }
+
+        // one RK4 step of the continuous closed loop on the fine step h
+        const k1 = closedLoop({ x1, x2, x3 }, p);
+        const k2 = closedLoop({ x1: x1 + 0.5 * h * k1.d1, x2: x2 + 0.5 * h * k1.d2, x3: x3 + 0.5 * h * k1.d3 }, p);
+        const k3 = closedLoop({ x1: x1 + 0.5 * h * k2.d1, x2: x2 + 0.5 * h * k2.d2, x3: x3 + 0.5 * h * k2.d3 }, p);
+        const k4 = closedLoop({ x1: x1 + h * k3.d1, x2: x2 + h * k3.d2, x3: x3 + h * k3.d3 }, p);
+        x1 += (h / 6) * (k1.d1 + 2 * k2.d1 + 2 * k3.d1 + k4.d1);
+        x2 += (h / 6) * (k1.d2 + 2 * k2.d2 + 2 * k3.d2 + k4.d2);
+        x3 += (h / 6) * (k1.d3 + 2 * k2.d3 + 2 * k3.d3 + k4.d3);
+      }
+
+      // a divergent (unstable) run breaks early; pin the remaining samples off-scale
+      // so the chart shows the runaway instead of going blank
+      if (overflow) {
+        let lastY = yData[0], lastU = uData[0];
+        for (let i = 0; i <= N; i++) {
+          if (yData[i] === undefined) { yData[i] = lastY; uData[i] = lastU; }
+          else { lastY = yData[i]; lastU = uData[i]; }
+        }
+      }
+      return { yData, uData, overflow };
+    }
+
+    function computeMetrics(sim) {
+      const y = sim.yData;
+
+      let peak = -Infinity;
+      for (let i = 0; i < y.length; i++) if (y[i] > peak) peak = y[i];
+      const overshoot = Math.max(0, (peak - 1) * 100);
+
+      let riseT = null;
+      for (let i = 0; i < y.length; i++) { if (y[i] >= 0.9) { riseT = i * dt; break; } }
+
+      // last sample that is still outside the 2% band; it settles just after
+      let lastOut = -1;
+      for (let i = 0; i < y.length; i++) if (Math.abs(y[i] - 1) > 0.02) lastOut = i;
+      let settleT;
+      if (lastOut < 0) settleT = 0;                 // never leaves the band
+      else if (lastOut >= N) settleT = null;        // still outside at t = T
+      else settleT = (lastOut + 1) * dt;
+
+      const yFinal = y[y.length - 1];
+      const sse = Math.abs(1 - yFinal);
+
+      return { overshoot, riseT, settleT, sse };
+    }
+
+    // ---- Chart -----------------------------------------------------------
+    const tickColor = '#8fa1b7';
+    const gridColor = 'rgba(255,255,255,0.06)';
+
+    const chart = new Chart(document.getElementById('pidChart'), {
+      type: 'line',
+      data: {
+        datasets: [
+          { label: '+2%', data: [{ x: 0, y: 1.02 }, { x: T, y: 1.02 }], borderColor: 'rgba(103,232,200,0.20)', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: '+1', backgroundColor: 'rgba(103,232,200,0.06)', order: 5 },
+          { label: '-2%', data: [{ x: 0, y: 0.98 }, { x: T, y: 0.98 }], borderColor: 'rgba(103,232,200,0.20)', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false, order: 5 },
+          { label: 'Reference', data: [{ x: 0, y: 1 }, { x: T, y: 1 }], borderColor: '#f0c060', borderWidth: 1.5, borderDash: [6, 6], pointRadius: 0, order: 4 },
+          { label: 'Control effort u(t)', data: [], borderColor: '#a78bfa', borderWidth: 1.5, pointRadius: 0, tension: 0.15, yAxisID: 'yU', hidden: true, order: 2 },
+          { label: 'Output y(t)', data: [], borderColor: '#67e8c8', borderWidth: 2.5, pointRadius: 0, tension: 0.15, order: 1 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        parsing: false,
+        normalized: true,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: {
+          x: {
+            type: 'linear', min: 0, max: T,
+            ticks: { color: tickColor, font: { size: 11 }, maxTicksLimit: 11 },
+            grid: { color: gridColor },
+            title: { display: true, text: 'Time (s)', color: tickColor, font: { size: 11 } }
+          },
+          y: {
+            ticks: { color: tickColor, font: { size: 11 } },
+            grid: { color: gridColor },
+            title: { display: true, text: 'Output y(t)', color: '#67e8c8', font: { size: 11 } }
+          },
+          yU: {
+            type: 'linear', position: 'right', display: false,
+            ticks: { color: '#a78bfa', font: { size: 11 } },
+            grid: { display: false },
+            title: { display: true, text: 'Control u(t)', color: '#a78bfa', font: { size: 11 } }
+          }
+        }
+      }
+    });
+
+    // ---- Display helpers -------------------------------------------------
+    function fmtTime(t) {
+      if (t === null) return '&gt; 10 s';
+      if (t === 0) return '0.00 s';
+      return t.toFixed(2) + ' s';
+    }
+
+    // round up to a 1 / 2 / 2.5 / 5 x 10^k value, so axis ticks stay clean
+    function niceNum(x) {
+      if (!(x > 0)) return 1;
+      const base = Math.pow(10, Math.floor(Math.log10(x)));
+      const f = x / base;
+      const nf = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
+      return nf * base;
+    }
+
+    // fit the output axis to the response, always framing y = 0 and the reference
+    // band. Snapping the bounds to nice numbers keeps the axis from jittering as a
+    // slider is dragged; unstable runaways are clamped so they don't flatten it.
+    function fitYAxis(yData, unstable) {
+      const cap = unstable ? 4 : Infinity;
+      let lo = 0, hi = 1.05;
+      for (let i = 0; i < yData.length; i++) {
+        let v = yData[i];
+        if (!isFinite(v)) continue;
+        if (v > cap) v = cap; else if (v < -cap) v = -cap;
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+      const pad = Math.max((hi - lo) * 0.08, 0.05);
+      const step = niceNum((hi - lo + 2 * pad) / 5);
+      const yScale = chart.options.scales.y;
+      yScale.min = Math.floor((lo - pad) / step) * step;
+      yScale.max = Math.ceil((hi + pad) / step) * step;
+      yScale.ticks.stepSize = step;
+    }
+
+    function render() {
+      const p = readParams();
+      ids.forEach(id => { el[id + 'Val'].textContent = p[id].toFixed(decimals[id]); });
+
+      const stable = isStable(p);
+      const sim = simulate(p);
+
+      const yPts = new Array(N + 1);
+      const uPts = new Array(N + 1);
+      for (let i = 0; i <= N; i++) {
+        const x = i * dt;
+        yPts[i] = { x, y: sim.yData[i] };
+        uPts[i] = { x, y: sim.uData[i] };
+      }
+      chart.data.datasets[4].data = yPts;
+      chart.data.datasets[3].data = uPts;
+      fitYAxis(sim.yData, !stable);
+      chart.update('none');
+
+      const statusEl = document.getElementById('pidStatus');
+      if (!stable) {
+        statusEl.textContent = 'Unstable';
+        statusEl.className = 'pid-status bad';
+        document.getElementById('mOvershoot').innerHTML = '&infin;';
+        document.getElementById('mRise').textContent = '—';
+        document.getElementById('mSettle').innerHTML = '&gt; 10 s';
+        document.getElementById('mSse').innerHTML = '&infin;';
+        return;
+      }
+      const m = computeMetrics(sim);
+      statusEl.textContent = 'Stable';
+      statusEl.className = 'pid-status ok';
+      document.getElementById('mOvershoot').textContent = m.overshoot.toFixed(1) + ' %';
+      document.getElementById('mRise').innerHTML = m.riseT === null ? '—' : m.riseT.toFixed(2) + ' s';
+      document.getElementById('mSettle').innerHTML = fmtTime(m.settleT);
+      document.getElementById('mSse').textContent = m.sse < 0.0005 ? '0.000' : m.sse.toFixed(3);
+    }
+
+    // ---- Wiring ----------------------------------------------------------
+    let pending = false;
+    function requestRender() {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(() => { pending = false; render(); });
+    }
+
+    ids.forEach(id => el[id].addEventListener('input', requestRender));
+
+    document.getElementById('showU').addEventListener('change', e => {
+      chart.data.datasets[3].hidden = !e.target.checked;
+      chart.options.scales.yU.display = e.target.checked;
+      chart.update('none');
+    });
+
+    document.querySelectorAll('[data-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = PRESETS[btn.dataset.preset];
+        if (!p) return;
+        ids.forEach(id => { el[id].value = p[id]; });
+        requestRender();
+      });
+    });
+
+    render();
+  })();
+  </script>
+</body>
+</html>
