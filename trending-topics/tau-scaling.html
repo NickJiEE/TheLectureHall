@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tau (τ) Scaling Law · The Lecture Hall</title>
+  <meta name="description" content="From geometric shrinkage to time compression — Huawei's τ Scaling Law and the future of semiconductor progress." />
+  <link rel="stylesheet" href="../assets/css/lecturehall.css" />
+  <script defer src="../assets/js/lecturehall-cursor.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    /* ── page-local overrides ─────────────────────────────────── */
+
+    /* Trend badge colour for this topic */
+    .trend-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: #22d3ee;
+      border: 1px solid rgba(34,211,238,.28);
+      background: rgba(34,211,238,.06);
+      padding: 5px 10px;
+      margin-bottom: 12px;
+    }
+    .trend-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22d3ee;
+      box-shadow: 0 0 8px #22d3ee;
+      animation: pulse-cyan 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse-cyan {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .4; transform: scale(1.5); }
+    }
+
+    /* ── Hero overline for this page ─────────────────────────── */
+    .tau-kicker { color: #22d3ee; }
+
+    /* ── Scaling eras timeline ────────────────────────────────── */
+    .era-timeline {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 0;
+      margin: 20px 0;
+      border: 1px solid var(--color-border-tertiary);
+      overflow: hidden;
+    }
+    .era-item {
+      padding: 16px 14px;
+      border-right: 1px solid var(--color-border-tertiary);
+      position: relative;
+    }
+    .era-item:last-child { border-right: none; }
+    .era-item::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .era-item.past::after   { background: rgba(167,139,250,.5); }
+    .era-item.active::after { background: #22d3ee; }
+    .era-item.future::after { background: rgba(240,192,96,.35); }
+    .era-year {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      margin-bottom: 6px;
+    }
+    .era-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .era-item.active .era-name { color: #22d3ee; }
+    .era-desc { font-size: 11.5px; color: var(--color-text-secondary); line-height: 1.5; }
+
+    /* ── Tau hierarchy diagram ────────────────────────────────── */
+    .tau-hierarchy {
+      margin: 20px 0;
+      border: 1px solid var(--color-border-tertiary);
+      background: var(--color-background-secondary);
+      padding: 20px 18px;
+    }
+    .tau-row {
+      display: grid;
+      grid-template-columns: 90px 1fr 110px;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--color-border-tertiary);
+    }
+    .tau-row:last-child { border-bottom: none; }
+    .tau-level {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .tau-formula {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: #f2dba7;
+      line-height: 1.55;
+    }
+    .tau-scale {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      text-align: right;
+    }
+
+    /* ── LogicFolding 2D → 3D animation canvas ──────────────── */
+    #stack-canvas-wrap {
+      margin: 20px 0;
+      border: 1px solid var(--color-border-tertiary);
+      background:
+        radial-gradient(circle at 50% 44%, rgba(34,211,238,.045), transparent 46%),
+        var(--color-background-secondary);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    #stack-canvas {
+      display: block;
+      width: 100%;
+      height: clamp(350px, 43vw, 430px);
+    }
+    .stack-toggle {
+      position: absolute;
+      z-index: 2;
+      top: 11px;
+      right: 12px;
+      border: 1px solid rgba(240,192,96,.25);
+      background: rgba(8,10,18,.76);
+      color: rgba(242,219,167,.88);
+      padding: 6px 9px;
+      font: 500 9.5px/1 var(--font-mono);
+      letter-spacing: .03em;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+    .stack-toggle:hover,
+    .stack-toggle:focus-visible {
+      border-color: rgba(34,211,238,.55);
+      color: #fff;
+      outline: none;
+    }
+    .stack-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--color-border-tertiary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .stack-legend-item { display: flex; align-items: center; gap: 6px; color: var(--color-text-secondary); }
+    .swatch { width: 10px; height: 10px; border-radius: 2px; flex: 0 0 auto; }
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
+    /* ── LogicFolding metric bars ─────────────────────────────── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .metric-card {
+      background: var(--color-background-secondary);
+      border: 1px solid var(--color-border-tertiary);
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+    }
+    .metric-up::before   { background: #22d3ee; }
+    .metric-down::before { background: var(--accent-gold); }
+    .metric-num {
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .metric-up .metric-num   { color: #22d3ee; }
+    .metric-down .metric-num { color: var(--accent-gold); }
+    .metric-arrow {
+      font-size: 16px;
+      margin-right: 2px;
+    }
+    .metric-label {
+      font-size: 11.5px;
+      color: var(--color-text-secondary);
+      margin-top: 4px;
+    }
+
+    /* ── τ Roadmap chart ──────────────────────────────────────── */
+    #roadmap-wrap {
+      border: 1px solid var(--color-border-tertiary);
+      background: var(--color-background-secondary);
+      padding: 20px;
+      margin: 16px 0;
+    }
+    #roadmap-canvas { display: block; width: 100%; height: 260px; }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 760px) {
+      .era-timeline { grid-template-columns: 1fr 1fr; }
+      .tau-row      { grid-template-columns: 70px 1fr; }
+      .tau-scale    { display: none; }
+      #stack-canvas { height: 330px; }
+      .stack-toggle { top: 8px; right: 8px; padding: 5px 7px; font-size: 8.5px; }
+      #roadmap-canvas { height: 210px; }
+    }
+
+    @media (max-width: 430px) {
+      #stack-canvas { height: 315px; }
+      .stack-legend { gap: 9px 12px; padding: 10px 12px; font-size: 10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .trend-badge::before { animation: none; }
+    }
+  </style>
+</head>
+<body class="lh-page">
+<div class="page-shell">
+
+  <!-- ── Nav ───────────────────────────────────────────────────── -->
+  <nav class="site-nav" aria-label="Main navigation">
+    <a class="brand-lockup" href="../index.html#main">
+      <img class="brand-icon" src="../image/icon.png" alt="The Lecture Hall" width="54" height="34" decoding="async" />
+      <div>
+        <div class="nav-brand">The <span>Lecture</span> Hall</div>
+        <div class="nav-sub">VLSI &amp; IC Design · Tau Scaling</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="../index.html#main">Index</a>
+      <a href="tau-scaling.html" class="active">τ Scaling</a>
+    </div>
+  </nav>
+
+  <div class="breadcrumbs">
+    <a href="../index.html#main">Index</a><span>/</span>
+    <a href="../index.html#main">VLSI &amp; IC Design</a><span>/</span>
+    <span>Tau (τ) Scaling Law</span>
+  </div>
+
+  <!-- ── Header ─────────────────────────────────────────────────── -->
+  <header class="topic-header">
+    <div class="trend-badge">Trending 2026</div>
+    <div class="kicker tau-kicker">Post-Moore Semiconductor Scaling</div>
+    <h1>When shrinking stops working, <span>compress time</span>.</h1>
+    <p>For six decades, Moore's Law drove progress by making transistors smaller. But geometric scaling has stalled: gate lengths have barely moved from 20 nm to 16 nm across a decade, while wafer costs have climbed by orders of magnitude. Huawei's τ (tau) Scaling Law proposes a new primary metric — not the transistor's physical size, but the characteristic time constant τ that determines how fast signals propagate through an entire computing stack, from device to data center.</p>
+    <div class="topic-meta">
+      <span>3D Logic Folding</span>
+      <span>Hybrid Bonding</span>
+      <span>XTCO / STCO</span>
+      <span>PPDC</span>
+      <span>Post-Moore</span>
+    </div>
+  </header>
+
+  <!-- ── §1  Intuition ──────────────────────────────────────────── -->
+  <section class="content-section" id="intuition">
+    <h2>Intuition</h2>
+
+    <div class="content-card">
+      <p>Moore's Law is fundamentally about geometry: halve the transistor area, get twice the transistors. The scaling metric is length <em>L</em> (in nm). What replaces it when lithography can no longer shrink L reliably?</p>
+      <p>Huawei's answer: optimise τ — a single characteristic time constant that unifies delay contributions across all abstraction levels of a computing system, from transistor switching speed (picoseconds) up to system-level communication latency (milliseconds). The central claim is that compressing τ at every level simultaneously — through 3D stacking, hybrid bonding, near-memory architecture, and hardware-software co-optimization — delivers the same exponential performance and density improvements Moore's Law once provided through geometry alone.</p>
+      <div class="equation-box">\[ \tau = f\!\left(\tau_{tr},\; \tau_{circuit},\; \tau_{chip},\; \tau_{sys}\right) \]</div>
+      <p>Each level has its own objective function and temporal scale, from the picosecond domain at the transistor level up through circuits, chips, and full data-center systems at the millisecond-to-second scale.</p>
+    </div>
+
+    <!-- Scaling eras -->
+    <div class="era-timeline" role="region" aria-label="Semiconductor scaling eras">
+      <div class="era-item past">
+        <div class="era-year">1965 – 2004</div>
+        <div class="era-name">Moore's Law</div>
+        <div class="era-desc">Transistor count doubles ~every 2 years via geometry shrinkage.</div>
+      </div>
+      <div class="era-item past">
+        <div class="era-year">1974 – ~2010</div>
+        <div class="era-name">Dennard Scaling</div>
+        <div class="era-desc">Shrinking also cut power density — free performance per watt. Ended when leakage currents wouldn't scale.</div>
+      </div>
+      <div class="era-item past">
+        <div class="era-year">2000 – present</div>
+        <div class="era-name">FinFET / GAAFET</div>
+        <div class="era-desc">3D gate structures rescued density gains. Now approaching physical and economic limits.</div>
+      </div>
+      <div class="era-item active">
+        <div class="era-year">2026 →</div>
+        <div class="era-name">τ Scaling</div>
+        <div class="era-desc">Replace length L with time τ as the universal optimization target across the full computing stack.</div>
+      </div>
+    </div>
+
+    <div class="note">Design intuition: Moore's Law asked "how small can the transistor be?" τ Scaling asks "how short can the signal path be — in time, not just in space?" The two metrics often align, but not always. A 3D-stacked chip with older-node silicon can beat a 2D cutting-edge chip if the vertical interconnect dramatically shortens the critical timing path.</div>
+  </section>
+
+  <!-- ── §2  The τ Hierarchy ────────────────────────────────────── -->
+  <section class="content-section" id="hierarchy">
+    <h2>The τ hierarchy</h2>
+
+    <div class="content-card">
+      <p>The framework decomposes τ into four coupled levels. Each has a distinct objective function and operates over a different temporal range:</p>
+    </div>
+
+    <div class="tau-hierarchy" role="region" aria-label="Tau scaling hierarchy">
+      <div class="tau-row">
+        <div class="tau-level">Device</div>
+        <div class="tau-formula">\(\tau_{device} = (R_{gate}+R_{net})\cdot(C_{gate}+C_{load})\)<br>RC delay of a single gate — FEOL / BEOL optimization</div>
+        <div class="tau-scale">ps</div>
+      </div>
+      <div class="tau-row">
+        <div class="tau-level">Circuit</div>
+        <div class="tau-formula">\(\tau_{circuit} = f\!\bigl(\Sigma(\tau_{transistor} + \tau_{interconnect}),\;DTCO\bigr)\)<br>Critical path delay — layout, routing, DTCO</div>
+        <div class="tau-scale">ns</div>
+      </div>
+      <div class="tau-row">
+        <div class="tau-level">Chip</div>
+        <div class="tau-formula">\(\tau_{chip} = f\!\bigl(\Sigma\tau_{cir_{XPU}},\;\Sigma\tau_{cir_{MBM}},\;\Sigma\tau_{cir_{IO}},\;N_{parall},\;\eta_{eff},\;M_P\bigr)\)<br>XPU compute + memory bandwidth + IO latency</div>
+        <div class="tau-scale">μs</div>
+      </div>
+      <div class="tau-row">
+        <div class="tau-level">System</div>
+        <div class="tau-formula">\(\tau_{sys} = f\!\bigl(\Sigma\tau_{chip},\;\Sigma\tau_{comm},\;N_{parall},\;\eta_{eff},\;M_P,\;RAS,\;STCO\bigr)\)<br>Multi-chip, rack, pod, data-center</div>
+        <div class="tau-scale">ms – s</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <p>The key insight is that each level can be separately improved and that gains are multiplicative across levels. Cutting τ at the device level while simultaneously reducing τ at the chip level (through 3D stacking that shortens memory-to-compute distances) and the system level (through SW-HW co-optimisation) compounds into performance gains that no single-level approach can match.</p>
+    </div>
+  </section>
+
+  <!-- ── §3  LogicFolding & 3D stacking animation ───────────────── -->
+  <section class="content-section" id="logicfolding">
+    <h2>LogicFolding: the key enabling technology</h2>
+
+    <div class="content-card">
+      <p>LogicFolding is Huawei's production 3D IC methodology. Rather than placing all logic in a single 2D plane, it partitions the chip vertically — stacking multiple active silicon tiers bonded face-to-face using hybrid bonding. The fundamental win is geometric: connections that would otherwise run millimetres across a 2D die can instead travel a few microns vertically through the bond interface.</p>
+      <p>The animation below illustrates the key idea: taking a flat 2D layout and folding it into a 3D stack, dramatically reducing the length (and therefore the RC delay τ) of critical paths.</p>
+    </div>
+
+    <!-- 3D Stacking animation -->
+    <div id="stack-canvas-wrap">
+      <button id="stack-toggle" class="stack-toggle" type="button" aria-pressed="false" aria-label="Pause LogicFolding animation at the current frame">Pause animation</button>
+      <canvas id="stack-canvas" role="img" aria-describedby="stack-canvas-description">Your browser does not support the LogicFolding canvas animation.</canvas>
+      <p id="stack-canvas-description" class="visually-hidden">A staged animation begins with four active circuit regions in a flat two-dimensional floorplan. The regions move inward and stack vertically with two copper-to-copper hybrid-bond interfaces. A long horizontal critical path is replaced by a much shorter vertical path. The completed stack then separates briefly to expose its bonding layers before returning to the flat view.</p>
+      <div class="stack-legend">
+        <div class="stack-legend-item"><div class="swatch" style="background:#22d3ee;opacity:.85"></div>Logic tier (top)</div>
+        <div class="stack-legend-item"><div class="swatch" style="background:#a78bfa;opacity:.85"></div>Logic tier (bottom)</div>
+        <div class="stack-legend-item"><div class="swatch" style="background:#f0c060;opacity:.85"></div>Hybrid-bond interconnect</div>
+        <div class="stack-legend-item"><div class="swatch" style="background:#f9a8d4;opacity:.7"></div>SRAM / memory tier</div>
+        <div class="stack-legend-item"><div class="swatch" style="background:#67e8c8;opacity:.6"></div>Power / IO tier</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h3>Why hybrid bonding enables this</h3>
+      <p>Classical chiplet integration uses microbumps with pitches of 50–100 µm. Hybrid bonding (Cu–Cu direct bonding) achieves connection pitches below 2 µm and bond temperatures below 300 °C, making the interconnect density between dies nearly comparable to on-die routing. Each 100 mm² of active area can contain tens of millions of hybrid-bond connections and hundreds of thousands of TSVs, creating a true monolithic-like 3D interconnect fabric.</p>
+    </div>
+
+    <!-- Metrics from Kirin 2026 -->
+    <div class="metric-grid" role="region" aria-label="LogicFolding measured improvements on Kirin 2026">
+      <div class="metric-card metric-up">
+        <div class="metric-num"><span class="metric-arrow">↑</span>53.5%</div>
+        <div class="metric-label">Transistor density (238 MTr/mm²)</div>
+      </div>
+      <div class="metric-card metric-up">
+        <div class="metric-num"><span class="metric-arrow">↑</span>41%</div>
+        <div class="metric-label">P-core power efficiency</div>
+      </div>
+      <div class="metric-card metric-up">
+        <div class="metric-num"><span class="metric-arrow">↑</span>12.7%</div>
+        <div class="metric-label">Max clock frequency</div>
+      </div>
+      <div class="metric-card metric-up">
+        <div class="metric-num"><span class="metric-arrow">↑</span>40%</div>
+        <div class="metric-label">SRAM frequency (circuit folding)</div>
+      </div>
+      <div class="metric-card metric-down">
+        <div class="metric-num"><span class="metric-arrow">↓</span>30%</div>
+        <div class="metric-label">SRAM total access latency</div>
+      </div>
+      <div class="metric-card metric-down">
+        <div class="metric-num"><span class="metric-arrow">↓</span>24%</div>
+        <div class="metric-label">SRAM energy per bit (pJ/bit)</div>
+      </div>
+    </div>
+
+    <div class="note">The SRAM improvements come from converting horizontal critical paths into vertical ones. Moving data decoder routing to the top metal layer and physically stacking SRAM over logic cuts the address-to-data RC path dramatically — the very definition of τ reduction.</div>
+  </section>
+
+  <!-- ── §4  Scaling roadmap chart ─────────────────────────────── -->
+  <section class="content-section" id="roadmap">
+    <h2>τ-Scaling roadmap</h2>
+
+    <div class="content-card">
+      <p>Huawei's published roadmap projects circuit density and P-core clock frequency through 2031 assuming continued LogicFolding improvements. The trajectory is notably steeper than any available lithography-only path, particularly from 2026 onward when the Kirin 2026 (238 MTr/mm², 3.1 GHz) validates the first production generation of the approach.</p>
+    </div>
+
+    <div id="roadmap-wrap">
+      <canvas id="roadmap-canvas" role="img" aria-describedby="roadmap-canvas-description">Tau scaling roadmap chart.</canvas>
+      <p id="roadmap-canvas-description" class="visually-hidden">Line chart for 2023 through 2031. Projected circuit density rises from 126 to 400 million transistors per square millimetre, while projected P-core frequency rises from 2.6 to 5.0 gigahertz.</p>
+    </div>
+
+    <div class="content-card">
+      <p>On the system roadmap, the Atlas AI compute pods scale from 8 EFLOPS (Atlas950, 2026) to 60 EFLOPS (Atlas960, 2027) — a 7.5× jump in one generation — with AtlasNEXT targeting zettaflop-class systems by 2030. This rate of scaling significantly exceeds what transistor density alone can provide.</p>
+    </div>
+  </section>
+
+  <!-- ── §5  Interconnection taxonomy ──────────────────────────── -->
+  <section class="content-section" id="packaging">
+    <h2>Interconnection of chips: a pitch continuum</h2>
+
+    <div class="content-card">
+      <p>τ Scaling does not dictate a single packaging technology. Instead, it identifies a pitch continuum that determines what granularity of communication is feasible between dies:</p>
+    </div>
+
+    <table class="comparison-table">
+      <thead>
+        <tr><th>Integration approach</th><th>Typical pitch</th><th>τ impact</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>PCB / MCM</strong></td>
+          <td>1000 – 100 µm</td>
+          <td>Long interconnect RC dominates, high τ<sub>sys</sub></td>
+          <td>Multi-chip modules, BGA packages</td>
+        </tr>
+        <tr>
+          <td><strong>Fan-out / Bridge</strong></td>
+          <td>50 – 25 µm</td>
+          <td>Chiplet-to-chiplet latency reduced</td>
+          <td>EMIB, COWOS, InFO</td>
+        </tr>
+        <tr>
+          <td><strong>Hybrid Bonding</strong></td>
+          <td>&lt; 2 µm</td>
+          <td>Near-on-die interconnect density; enables LogicFolding</td>
+          <td>Kirin 2026, HBM3E, cache stacking</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="content-card">
+      <h3>System folding: the 2.5D dilemma</h3>
+      <p>A conventional 2.5D design places HBM dies around a central logic die on an interposer. The logic die must then be large enough to reach all the memory — creating an N² scaling problem where die size, performance, and power all grow together. System folding inverts this by stacking logic, DRAM, and NAND layers vertically with TSV-based interconnects, replacing the flat N² footprint with a compact N-bandwidth-per-layer structure. Huawei's roadmap projects this approach delivers 4× hardware integration improvement by 2028 and more than 100× by 2035.</p>
+    </div>
+  </section>
+
+  <!-- ── §6  Thermal challenge ──────────────────────────────────── -->
+  <section class="content-section" id="thermal">
+    <h2>Thermal: the hard constraint</h2>
+    <div class="content-card">
+      <p>3D stacking concentrates power density. Thermal management must therefore span the same hierarchy as τ itself: transient thermal shock at the device level (ps–ns), local hot-spots at the circuit level (ns–µs), vertical conduction at the chip level, VRM miniaturisation at the board level, and PUE requirements at the data-center level.</p>
+      <p>Folding-oriented methodology explicitly includes thermal paths as a concurrent optimization objective alongside wirelength and timing. The SRAM folding results illustrate this: the move from horizontal to vertical critical paths also improves local thermal conduction because the thermal path to the package is now in the same direction as the signal path.</p>
+    </div>
+    <div class="note">Key design tension: hybrid-bonding process temperatures must stay below 300 °C to avoid damaging the lower tier's existing BEOL stack. This constrains which dielectric and barrier materials can be used and is an active research frontier.</div>
+  </section>
+
+  <!-- ── §7  Worked example ─────────────────────────────────────── -->
+  <section class="content-section" id="worked-example">
+    <h2>Worked example: where does τ go?</h2>
+
+    <div class="content-card">
+      <p><strong>Problem.</strong> A 2D CPU core has a critical path with 40 logic stages. The path crosses the chip twice, totalling ~4 mm of interconnect at metal layers M3–M5. The interconnect RC contribution is 60% of total cycle time at 3 GHz. Estimate the τ<sub>circuit</sub> reduction from LogicFolding that halves the interconnect length.</p>
+      <p><strong>RC model.</strong> For a wire of resistance R and capacitance C, the delay scales as \(\tau \sim \frac{1}{2}RC \propto L^2\) for a distributed RC line. Halving the wire length therefore reduces interconnect delay by a factor of 4 (since both R and C scale with L).</p>
+      <div class="equation-box">\[ \tau_{interconnect} \propto R \cdot C \propto L^2 \]</div>
+      <p><strong>Idealized result.</strong> Interconnect accounts for 60% of the 333 ps cycle period, or approximately 200 ps. The remaining logic, clocking, and other fixed delay is approximately 133 ps. If every relevant wire segment were truly halved, the distributed-wire estimate would reduce the interconnect portion to 50 ps, giving a new critical-path delay of approximately 183 ps and an idealized upper-bound frequency of approximately 5.46 GHz.</p>
+      <p><strong>Why measured gains are smaller.</strong> That upper bound is not directly comparable to a production frequency result. Only selected routes can be folded; vias and bond interfaces add parasitics; some delay does not scale with wire length; and power, thermal, clock-distribution, and timing-closure limits remain. A measured 12.7% clock increase can therefore be entirely plausible even though the simplified RC-only calculation predicts a much larger theoretical gain.</p>
+      <p><strong>Takeaway.</strong> You do not need a new fab node to reduce τ. Re-routing selected critical paths vertically through a hybrid-bond interface can shorten wire length and reduce the distributed RC delay, which scales approximately with L² in this simplified model.</p>
+    </div>
+  </section>
+
+  <!-- ── §8  Critical perspective ──────────────────────────────── -->
+  <section class="content-section" id="perspective">
+    <h2>Questions worth thinking about</h2>
+    <div class="content-card">
+      <p>τ Scaling is a compelling framework, but it raises several design and methodology questions that don't yet have settled answers:</p>
+      <p><strong>Equivalent node claims.</strong> Huawei has referred to a future LogicFolding target described as equivalent to a 1.4 nm process. From a design perspective, "equivalent" is not the same as lithographic node — it is a density and performance claim. What metrics (MTr/mm², frequency, power efficiency) would make such an equivalence verifiable?</p>
+      <p><strong>EDA tooling gap.</strong> Pseudo-3D flows (module-level tier assignment after synthesis) are supported by today's commercial EDA tools. True-3D flows — where cells inside the same logic module can migrate across tier boundaries during placement — require fundamentally new placement engines, 3D static timing analysis, and cross-tier DRC. The gap between what is claimed and what EDA infrastructure can deliver is real and active.</p>
+      <p><strong>Thermal vs. density tradeoff.</strong> Every additional folded tier improves density and latency but worsens thermal resistance to the package. The optimum number of tiers is a function of power density, cooling system, and workload — not a fixed number.</p>
+    </div>
+  </section>
+
+  <!-- ── Source credits ─────────────────────────────────────────── -->
+  <section class="content-section" id="source-credits">
+    <h2>Source credits</h2>
+    <div class="source-grid">
+      <div class="source-credit">
+        <strong>HUAWEI Presents the Tau (τ) Scaling Law</strong>
+        Tingbo He, President of Huawei Semiconductor &amp; Chair of Huawei Scientist Committee · ISCAS 2026 Keynote Speech "New Semiconductor Path in Practice" · May 2026.
+        <a href="https://www.huawei.com/en/news/2026/5/ieee-iscas-tau-scaling" target="_blank" rel="noopener">Read the Huawei announcement →</a>
+      </div>
+      <div class="source-credit">
+        <strong>A Time Scaling Theory for Multi-Layer Electronic Systems</strong>
+        Tingbo He · ChinaXiv preprint · DOI: 10.12074/202605.00224 · Submission: 2026-01-25.
+        <a href="https://chinaxiv.org/abs/202605.00224" target="_blank" rel="noopener">Read on ChinaXiv →</a>
+      </div>
+      <div class="source-credit">
+        <strong>ECE 260C SP26 Lecture Slides</strong>
+        Prof. Andrew B. Kahng · "2D and 3D Physical Design Research" with sections on Huawei's τ Scaling Law, Pin-3D enablement flows, and LogicFolding results · UC San Diego, Spring 2026.
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <a href="../index.html#main">← Back to Index</a>
+  </footer>
+</div>
+
+<!-- ================================================================
+     SCRIPTS: 3D stacking animation + roadmap chart
+================================================================ -->
+<script>
+// ── LogicFolding: staged 2D → 3D animation ───────────────────────
+(function () {
+  const canvas = document.getElementById('stack-canvas');
+  const toggle = document.getElementById('stack-toggle');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const CYCLE_SECONDS = 17.0;
+  const ANGLE_X = 28 * Math.PI / 180;
+
+  const LAYERS = [
+    { id: 'logic-top',    label: 'Logic tier A',      rgb: '34,211,238',  opacity: 0.82, height: 30, kind: 'active', flatSlot: 0 },
+    { id: 'bond-top',     label: 'Cu–Cu hybrid bond', rgb: '240,192,96',  opacity: 0.58, height: 8,  kind: 'bond' },
+    { id: 'logic-bottom', label: 'Logic tier B',      rgb: '167,139,250', opacity: 0.80, height: 30, kind: 'active', flatSlot: 1 },
+    { id: 'bond-bottom',  label: 'Cu–Cu hybrid bond', rgb: '240,192,96',  opacity: 0.52, height: 8,  kind: 'bond' },
+    { id: 'memory',       label: 'SRAM / memory',     rgb: '249,168,212', opacity: 0.68, height: 24, kind: 'active', flatSlot: 2 },
+    { id: 'power',        label: 'Power / IO',        rgb: '103,232,200', opacity: 0.52, height: 20, kind: 'active', flatSlot: 3 }
+  ];
+
+  let W = 0;
+  let H = 0;
+  let dpr = 1;
+  // Always begin at Step 01. Reduced-motion users see the first frame
+  // paused, rather than being dropped into the middle of the sequence.
+  let elapsed = 0;
+  let lastNow = null;
+  let animationId = 0;
+  let running = false;
+  let inViewport = true;
+  let pageVisible = !document.hidden;
+  let userPaused = reduceMotionQuery.matches;
+
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const lerp = (a, b, amount) => a + (b - a) * amount;
+  const smoothstep = value => {
+    const x = clamp(value, 0, 1);
+    return x * x * (3 - 2 * x);
+  };
+  const easeInOutCubic = value => {
+    const x = clamp(value, 0, 1);
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  };
+  const segment = (time, start, end) => clamp((time - start) / (end - start), 0, 1);
+
+  function resizeCanvas() {
+    W = Math.max(1, canvas.clientWidth);
+    H = Math.max(1, canvas.clientHeight);
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const pixelWidth = Math.round(W * dpr);
+    const pixelHeight = Math.round(H * dpr);
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    render(elapsed);
+  }
+
+  function sceneAt(time) {
+    let fold = 0;
+    let inspect = 0;
+    let phase = 'Flat 2D floorplan';
+    let phaseNumber = 1;
+
+    if (time < 1.8) {
+      fold = 0;
+    } else if (time < 5.2) {
+      fold = easeInOutCubic(segment(time, 1.8, 5.2));
+      phase = 'Folding active tiers vertically';
+      phaseNumber = 2;
+    } else if (time < 8.0) {
+      fold = 1;
+      phase = 'Short vertical critical path';
+      phaseNumber = 3;
+    } else if (time < 11.5) {
+      fold = 1;
+      // Step 04 now holds for an additional 0.5 s so the exposed bond
+      // interfaces remain visible longer before reassembly begins.
+      inspect = smoothstep(segment(time, 8.0, 11.5));
+      phase = 'Inspecting hybrid-bond interfaces';
+      phaseNumber = 4;
+    } else if (time < 13.5) {
+      fold = 1;
+      inspect = 1 - smoothstep(segment(time, 11.5, 13.5));
+      phase = 'Reassembling the compact stack';
+      phaseNumber = 4;
+    } else if (time < 16.4) {
+      fold = 1 - easeInOutCubic(segment(time, 13.5, 16.4));
+      phase = 'Returning to the 2D view';
+      phaseNumber = 2;
+    }
+
+    return { fold, inspect, phase, phaseNumber };
+  }
+
+  function getGeometry(scene) {
+    const mobile = W < 620;
+    const baseWidth = clamp(W * (mobile ? 0.58 : 0.50), 205, 340);
+    const baseDepth = baseWidth * 0.38;
+    const flatScale = mobile ? 0.43 : 0.46;
+    const layerScale = lerp(flatScale, 1, scene.fold);
+    const compactGap = mobile ? 5 : 7;
+    const inspectGap = mobile ? 13 : 24;
+    const gap = compactGap + inspectGap * scene.inspect;
+
+    const scaledHeights = LAYERS.map(layer => layer.height * layerScale);
+    const totalHeight = scaledHeights.reduce((sum, value) => sum + value, 0) + gap * (LAYERS.length - 1);
+    let cursor = -totalHeight / 2;
+    const stackCenters = scaledHeights.map(height => {
+      const center = cursor + height / 2;
+      cursor += height + gap;
+      return center;
+    });
+
+    const flatSpreadX = baseWidth * (mobile ? 0.46 : 0.54);
+    const flatSpreadZ = baseDepth * 0.72;
+    const flatSlots = [
+      { x: -flatSpreadX, z: -flatSpreadZ },
+      { x:  flatSpreadX, z: -flatSpreadZ },
+      { x: -flatSpreadX, z:  flatSpreadZ },
+      { x:  flatSpreadX, z:  flatSpreadZ }
+    ];
+
+    const centerX = W * 0.5;
+    const centerY = H * (mobile ? 0.57 : 0.56);
+    const angleY = (36 + 5 * scene.inspect * Math.sin(elapsed * 1.25)) * Math.PI / 180;
+
+    const layers = LAYERS.map((layer, index) => {
+      const isBond = layer.kind === 'bond';
+      const slot = isBond ? { x: 0, z: 0 } : flatSlots[layer.flatSlot];
+      const bondReveal = smoothstep(segment(scene.fold, 0.28, 0.72));
+      const visibility = isBond ? bondReveal : 1;
+      const scale = isBond
+        ? lerp(0.25, layerScale, bondReveal)
+        : layerScale;
+
+      return {
+        ...layer,
+        x: lerp(slot.x, 0, scene.fold),
+        z: lerp(slot.z, 0, scene.fold),
+        y: lerp(0, stackCenters[index], scene.fold),
+        width: baseWidth * scale,
+        depth: baseDepth * scale,
+        height: layer.height * scale,
+        visibility
+      };
+    });
+
+    return { mobile, baseWidth, baseDepth, centerX, centerY, angleY, layers };
+  }
+
+  function project(point, geometry) {
+    const cosY = Math.cos(geometry.angleY);
+    const sinY = Math.sin(geometry.angleY);
+    const sinX = Math.sin(ANGLE_X);
+    const cosX = Math.cos(ANGLE_X);
+    return {
+      x: geometry.centerX + point.x * cosY - point.z * sinY,
+      y: geometry.centerY - point.x * sinY * sinX + point.y * cosX - point.z * cosY * sinX
+    };
+  }
+
+  function rgba(layer, opacityMultiplier) {
+    return `rgba(${layer.rgb},${clamp(layer.opacity * layer.visibility * opacityMultiplier, 0, 1)})`;
+  }
+
+  function polygon(points) {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i += 1) ctx.lineTo(points[i].x, points[i].y);
+    ctx.closePath();
+  }
+
+  function roundedRect(x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + height, r);
+    ctx.arcTo(x + width, y + height, x, y + height, r);
+    ctx.arcTo(x, y + height, x, y, r);
+    ctx.arcTo(x, y, x + width, y, r);
+    ctx.closePath();
+  }
+
+  function boxCorners(layer, geometry) {
+    const x0 = layer.x - layer.width / 2;
+    const x1 = layer.x + layer.width / 2;
+    const z0 = layer.z - layer.depth / 2;
+    const z1 = layer.z + layer.depth / 2;
+    const y0 = layer.y - layer.height / 2;
+    const y1 = layer.y + layer.height / 2;
+
+    return {
+      topBackLeft: project({ x: x0, y: y0, z: z0 }, geometry),
+      topBackRight: project({ x: x1, y: y0, z: z0 }, geometry),
+      topFrontRight: project({ x: x1, y: y0, z: z1 }, geometry),
+      topFrontLeft: project({ x: x0, y: y0, z: z1 }, geometry),
+      bottomBackLeft: project({ x: x0, y: y1, z: z0 }, geometry),
+      bottomBackRight: project({ x: x1, y: y1, z: z0 }, geometry),
+      bottomFrontRight: project({ x: x1, y: y1, z: z1 }, geometry),
+      bottomFrontLeft: project({ x: x0, y: y1, z: z1 }, geometry)
+    };
+  }
+
+  function fillFace(points, fill, stroke, lineWidth) {
+    polygon(points);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+
+  function drawSurfaceDetails(layer, corners) {
+    if (layer.kind !== 'active' || layer.visibility < 0.15) return;
+
+    const top = [corners.topBackLeft, corners.topBackRight, corners.topFrontRight, corners.topFrontLeft];
+    ctx.save();
+    polygon(top);
+    ctx.clip();
+    ctx.strokeStyle = rgba(layer, 0.32);
+    ctx.lineWidth = 0.8;
+
+    for (let i = 1; i <= 4; i += 1) {
+      const amount = i / 5;
+      const p1 = {
+        x: lerp(corners.topBackLeft.x, corners.topFrontLeft.x, amount),
+        y: lerp(corners.topBackLeft.y, corners.topFrontLeft.y, amount)
+      };
+      const p2 = {
+        x: lerp(corners.topBackRight.x, corners.topFrontRight.x, amount),
+        y: lerp(corners.topBackRight.y, corners.topFrontRight.y, amount)
+      };
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+
+    for (let i = 1; i <= 5; i += 1) {
+      const amount = i / 6;
+      const p1 = {
+        x: lerp(corners.topBackLeft.x, corners.topBackRight.x, amount),
+        y: lerp(corners.topBackLeft.y, corners.topBackRight.y, amount)
+      };
+      const p2 = {
+        x: lerp(corners.topFrontLeft.x, corners.topFrontRight.x, amount),
+        y: lerp(corners.topFrontLeft.y, corners.topFrontRight.y, amount)
+      };
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawBondDots(layer, geometry) {
+    if (layer.kind !== 'bond' || layer.visibility < 0.1) return;
+
+    const rows = geometry.mobile ? 4 : 5;
+    const columns = geometry.mobile ? 10 : 14;
+    const y = layer.y - layer.height / 2 - 0.1;
+
+    for (let row = 0; row < rows; row += 1) {
+      for (let column = 0; column < columns; column += 1) {
+        const point = project({
+          x: layer.x - layer.width / 2 + layer.width * (column + 0.5) / columns,
+          y,
+          z: layer.z - layer.depth / 2 + layer.depth * (row + 0.5) / rows
+        }, geometry);
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, geometry.mobile ? 0.9 : 1.15, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(layer, 1.35);
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawLayer(layer, geometry) {
+    if (layer.visibility <= 0.01) return;
+
+    const corners = boxCorners(layer, geometry);
+    const stroke = rgba(layer, 1.15);
+    const lineWidth = layer.kind === 'bond' ? 0.45 : 0.8;
+
+    // Draw all six faces so every tier is a genuinely closed solid. The
+    // back/right/bottom faces are intentionally dimmer because they face away
+    // from the viewer, but they remain visible through the translucent stack.
+    const faces = [
+      {
+        points: [corners.bottomBackLeft, corners.bottomBackRight, corners.bottomFrontRight, corners.bottomFrontLeft],
+        fill: rgba(layer, 0.24)
+      },
+      {
+        points: [corners.topBackLeft, corners.topBackRight, corners.bottomBackRight, corners.bottomBackLeft],
+        fill: rgba(layer, 0.34)
+      },
+      {
+        points: [corners.topBackRight, corners.topFrontRight, corners.bottomFrontRight, corners.bottomBackRight],
+        fill: rgba(layer, 0.40)
+      },
+      {
+        points: [corners.topBackLeft, corners.topFrontLeft, corners.bottomFrontLeft, corners.bottomBackLeft],
+        fill: rgba(layer, 0.56)
+      },
+      {
+        points: [corners.topFrontLeft, corners.topFrontRight, corners.bottomFrontRight, corners.bottomFrontLeft],
+        fill: rgba(layer, 0.72)
+      },
+      {
+        points: [corners.topBackLeft, corners.topBackRight, corners.topFrontRight, corners.topFrontLeft],
+        fill: rgba(layer, 1),
+        lineWidth: layer.kind === 'bond' ? 0.6 : 1
+      }
+    ];
+
+    faces.forEach(face => {
+      fillFace(face.points, face.fill, stroke, face.lineWidth ?? lineWidth);
+    });
+
+    drawSurfaceDetails(layer, corners);
+    drawBondDots(layer, geometry);
+  }
+
+  function drawFloorplanPlane(scene, geometry) {
+    const alpha = Math.pow(1 - scene.fold, 1.5);
+    if (alpha < 0.01) return;
+
+    const width = geometry.baseWidth * 1.52;
+    const depth = geometry.baseDepth * 2.25;
+    const y = 13;
+    const corners = [
+      project({ x: -width / 2, y, z: -depth / 2 }, geometry),
+      project({ x:  width / 2, y, z: -depth / 2 }, geometry),
+      project({ x:  width / 2, y, z:  depth / 2 }, geometry),
+      project({ x: -width / 2, y, z:  depth / 2 }, geometry)
+    ];
+
+    polygon(corners);
+    ctx.fillStyle = `rgba(34,211,238,${0.025 * alpha})`;
+    ctx.fill();
+    ctx.strokeStyle = `rgba(34,211,238,${0.18 * alpha})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.save();
+    polygon(corners);
+    ctx.clip();
+    ctx.strokeStyle = `rgba(167,139,250,${0.09 * alpha})`;
+    ctx.lineWidth = 0.7;
+    const divisions = 8;
+    for (let i = 1; i < divisions; i += 1) {
+      const x = -width / 2 + width * i / divisions;
+      let p1 = project({ x, y: y - 0.1, z: -depth / 2 }, geometry);
+      let p2 = project({ x, y: y - 0.1, z:  depth / 2 }, geometry);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+
+      const z = -depth / 2 + depth * i / divisions;
+      p1 = project({ x: -width / 2, y: y - 0.1, z }, geometry);
+      p2 = project({ x:  width / 2, y: y - 0.1, z }, geometry);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawLongPath(scene, geometry) {
+    const alpha = 1 - smoothstep(segment(scene.fold, 0.24, 0.72));
+    if (alpha < 0.01) return;
+
+    const activeLayers = geometry.layers.filter(layer => layer.kind === 'active');
+    const points = activeLayers.map(layer => project({
+      x: layer.x,
+      y: layer.y - layer.height / 2 - 2,
+      z: layer.z
+    }, geometry));
+
+    ctx.save();
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.shadowColor = `rgba(240,192,96,${0.7 * alpha})`;
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = `rgba(240,192,96,${0.82 * alpha})`;
+    ctx.lineWidth = geometry.mobile ? 2 : 2.5;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i += 1) ctx.lineTo(points[i].x, points[i].y);
+    ctx.stroke();
+    ctx.restore();
+
+    if (scene.fold < 0.42) {
+      const labelX = geometry.mobile ? 12 : 18;
+      const labelY = H - (geometry.mobile ? 18 : 22);
+      ctx.font = `500 ${geometry.mobile ? 9 : 10}px 'JetBrains Mono', monospace`;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = `rgba(240,192,96,${0.72 * alpha})`;
+      ctx.fillText('Long horizontal critical path · millimetres', labelX, labelY);
+    }
+  }
+
+  function drawVerticalPath(scene, geometry) {
+    const alpha = smoothstep(segment(scene.fold, 0.58, 0.92));
+    if (alpha < 0.01) return;
+
+    const activeLayers = geometry.layers.filter(layer => layer.kind === 'active');
+    const topLayer = activeLayers[0];
+    const bottomLayer = activeLayers[activeLayers.length - 1];
+    const top = project({ x: 0, y: topLayer.y - topLayer.height / 2 - 10, z: 0 }, geometry);
+    const bottom = project({ x: 0, y: bottomLayer.y + bottomLayer.height / 2 + 9, z: 0 }, geometry);
+
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.shadowColor = `rgba(240,192,96,${0.8 * alpha})`;
+    ctx.shadowBlur = 14;
+    ctx.strokeStyle = `rgba(240,192,96,${0.9 * alpha})`;
+    ctx.lineWidth = geometry.mobile ? 2 : 2.6;
+    ctx.beginPath();
+    ctx.moveTo(top.x, top.y);
+    ctx.lineTo(bottom.x, bottom.y);
+    ctx.stroke();
+
+    const pulse = (elapsed * 0.55) % 1;
+    const pulseX = lerp(top.x, bottom.x, pulse);
+    const pulseY = lerp(top.y, bottom.y, pulse);
+    const pulseRadius = geometry.mobile ? 3.2 : 4;
+    ctx.beginPath();
+    ctx.arc(pulseX, pulseY, pulseRadius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,229,158,${alpha})`;
+    ctx.fill();
+    ctx.restore();
+
+    if (scene.fold > 0.72) {
+      const labelX = geometry.mobile ? 12 : 18;
+      const labelY = H - (geometry.mobile ? 18 : 22);
+      ctx.font = `500 ${geometry.mobile ? 9 : 10}px 'JetBrains Mono', monospace`;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = `rgba(240,192,96,${0.8 * alpha})`;
+      ctx.fillText('Short vertical path · micrometres', labelX, labelY);
+    }
+  }
+
+  function drawLabel(text, anchor, labelX, labelY, align, color, alpha, mobile) {
+    if (alpha < 0.03) return;
+    const fontSize = mobile ? 9 : 10.5;
+    const paddingX = mobile ? 7 : 9;
+    const boxHeight = mobile ? 20 : 23;
+
+    ctx.font = `500 ${fontSize}px 'JetBrains Mono', monospace`;
+    const textWidth = ctx.measureText(text).width;
+    const boxWidth = textWidth + paddingX * 2;
+    const desiredBoxX = align === 'right' ? labelX - boxWidth : labelX;
+    const boxX = clamp(desiredBoxX, 6, Math.max(6, W - boxWidth - 6));
+    const boxY = clamp(labelY - boxHeight / 2, 42, H - boxHeight - 30);
+    const lineEndX = anchor.x < boxX ? boxX : boxX + boxWidth;
+    const lineEndY = boxY + boxHeight / 2;
+
+    ctx.strokeStyle = `rgba(${color},${0.45 * alpha})`;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(anchor.x, anchor.y);
+    ctx.lineTo(lineEndX, lineEndY);
+    ctx.stroke();
+
+    roundedRect(boxX, boxY, boxWidth, boxHeight, 4);
+    ctx.fillStyle = `rgba(8,10,18,${0.78 * alpha})`;
+    ctx.fill();
+    ctx.strokeStyle = `rgba(${color},${0.32 * alpha})`;
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = `rgba(238,242,255,${0.9 * alpha})`;
+    ctx.fillText(text, boxX + paddingX, lineEndY + 0.5);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function drawLabels(scene, geometry) {
+    const flatAlpha = 1 - smoothstep(segment(scene.fold, 0.08, 0.30));
+    const stackAlpha = smoothstep(segment(scene.fold, 0.76, 0.96));
+    const activeLayers = geometry.layers.filter(layer => layer.kind === 'active');
+
+    activeLayers.forEach(layer => {
+      const anchor = project({ x: layer.x, y: layer.y - layer.height / 2 - 2, z: layer.z }, geometry);
+      if (flatAlpha > 0.02) {
+        drawLabel(
+          layer.label,
+          anchor,
+          anchor.x + (layer.flatSlot % 2 === 0 ? -8 : 8),
+          anchor.y - (geometry.mobile ? 26 : 31),
+          layer.flatSlot % 2 === 0 ? 'right' : 'left',
+          layer.rgb,
+          flatAlpha,
+          geometry.mobile
+        );
+      }
+    });
+
+    if (stackAlpha > 0.02) {
+      const labelYs = geometry.mobile
+        ? [H * 0.25, H * 0.38, H * 0.64, H * 0.76]
+        : [H * 0.25, H * 0.38, H * 0.64, H * 0.77];
+
+      activeLayers.forEach((layer, index) => {
+        const anchor = project({ x: 0, y: layer.y, z: layer.depth / 2 }, geometry);
+        const onLeft = index % 2 === 0;
+        drawLabel(
+          layer.label,
+          anchor,
+          onLeft ? (geometry.mobile ? 8 : 14) : W - (geometry.mobile ? 8 : 14),
+          labelYs[index],
+          onLeft ? 'left' : 'right',
+          layer.rgb,
+          stackAlpha,
+          geometry.mobile
+        );
+      });
+
+      if (scene.inspect > 0.16) {
+        const bond = geometry.layers.find(layer => layer.id === 'bond-top');
+        const anchor = project({ x: 0, y: bond.y, z: -bond.depth / 2 }, geometry);
+        drawLabel(
+          'Sub-2 µm Cu–Cu pitch',
+          anchor,
+          W - (geometry.mobile ? 8 : 14),
+          H * 0.51,
+          'right',
+          bond.rgb,
+          smoothstep(segment(scene.inspect, 0.16, 0.62)),
+          geometry.mobile
+        );
+      }
+    }
+  }
+
+  function drawHeader(scene, geometry) {
+    const titleSize = geometry.mobile ? 9.5 : 11;
+    ctx.textAlign = 'left';
+    ctx.font = `600 ${titleSize}px 'JetBrains Mono', monospace`;
+    ctx.fillStyle = 'rgba(240,192,96,0.82)';
+    ctx.fillText(`0${scene.phaseNumber} · ${scene.phase}`, geometry.mobile ? 11 : 15, geometry.mobile ? 19 : 21);
+
+    const lineY = geometry.mobile ? 30 : 34;
+    const lineX = geometry.mobile ? 11 : 15;
+    const lineWidth = Math.min(W * 0.42, 210);
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(lineX, lineY, lineWidth, 2);
+    ctx.fillStyle = 'rgba(34,211,238,0.65)';
+    ctx.fillRect(lineX, lineY, lineWidth * (elapsed / CYCLE_SECONDS), 2);
+  }
+
+  function render(time) {
+    if (!W || !H) return;
+    ctx.clearRect(0, 0, W, H);
+
+    const scene = sceneAt(time);
+    const geometry = getGeometry(scene);
+    drawHeader(scene, geometry);
+    drawFloorplanPlane(scene, geometry);
+
+    const layersToDraw = [...geometry.layers]
+      .filter(layer => layer.visibility > 0.01)
+      .sort((a, b) => {
+        const pa = project({ x: a.x, y: a.y, z: a.z }, geometry);
+        const pb = project({ x: b.x, y: b.y, z: b.z }, geometry);
+        return pa.y - pb.y;
+      });
+
+    layersToDraw.forEach(layer => drawLayer(layer, geometry));
+
+    drawLongPath(scene, geometry);
+    drawVerticalPath(scene, geometry);
+    drawLabels(scene, geometry);
+  }
+
+  function shouldRun() {
+    return inViewport && pageVisible && !userPaused;
+  }
+
+  function updateToggle() {
+    if (!toggle) return;
+    const paused = !shouldRun();
+    toggle.textContent = paused ? 'Play animation' : 'Pause animation';
+    toggle.setAttribute('aria-pressed', paused ? 'true' : 'false');
+    toggle.setAttribute('aria-label', paused ? 'Play LogicFolding animation' : 'Pause LogicFolding animation');
+  }
+
+  function frame(now) {
+    if (!running) return;
+
+    // The first frame after resuming establishes a new clock origin. This
+    // prevents time spent paused, offscreen, or in a hidden tab from being
+    // added to the animation timeline.
+    if (lastNow === null) {
+      lastNow = now;
+    } else {
+      const delta = Math.min((now - lastNow) / 1000, 0.05);
+      lastNow = now;
+      elapsed = (elapsed + delta) % CYCLE_SECONDS;
+    }
+
+    render(elapsed);
+    animationId = requestAnimationFrame(frame);
+  }
+
+  function start() {
+    if (running || !shouldRun()) {
+      updateToggle();
+      return;
+    }
+    running = true;
+    lastNow = null;
+    animationId = requestAnimationFrame(frame);
+    updateToggle();
+  }
+
+  function stop() {
+    if (animationId) cancelAnimationFrame(animationId);
+    animationId = 0;
+    running = false;
+    lastNow = null;
+
+    // Re-render the exact stored timeline position. Pausing never changes
+    // elapsed, so Play resumes from precisely this frame.
+    render(elapsed);
+    updateToggle();
+  }
+
+  function reconcilePlayback() {
+    if (shouldRun()) start();
+    else stop();
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      userPaused = !userPaused;
+      reconcilePlayback();
+    });
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    pageVisible = !document.hidden;
+    reconcilePlayback();
+  });
+
+  const intersectionObserver = new IntersectionObserver(entries => {
+    inViewport = entries[0]?.isIntersecting ?? true;
+    reconcilePlayback();
+  }, { threshold: 0.04 });
+  intersectionObserver.observe(canvas);
+
+  const resizeObserver = new ResizeObserver(resizeCanvas);
+  resizeObserver.observe(canvas);
+
+  reduceMotionQuery.addEventListener?.('change', event => {
+    if (event.matches) {
+      // Freeze the current frame when reduced motion is enabled. Do not
+      // jump to another phase or reset the animation timeline.
+      userPaused = true;
+    }
+    reconcilePlayback();
+  });
+
+  resizeCanvas();
+  reconcilePlayback();
+})();
+
+
+// ── Roadmap chart ──────────────────────────────────────────────────
+(function () {
+  const canvas = document.getElementById('roadmap-canvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const years = [2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031];
+  const density = [126, 126, 155, 238, 252, 266, 277, 292, 400];
+  const frequency = [2.6, 2.65, 2.75, 3.1, 3.39, 3.71, 4.0, 4.3, 5.0];
+
+  function draw() {
+    const W = Math.max(1, canvas.clientWidth);
+    const H = Math.max(1, canvas.clientHeight);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const pixelWidth = Math.round(W * dpr);
+    const pixelHeight = Math.round(H * dpr);
+
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    const compact = W < 520;
+    const padding = compact
+      ? { t: 33, r: 43, b: 42, l: 43 }
+      : { t: 30, r: 60, b: 48, l: 60 };
+    const chartWidth = Math.max(1, W - padding.l - padding.r);
+    const chartHeight = Math.max(1, H - padding.t - padding.b);
+
+    ctx.strokeStyle = 'rgba(240,192,96,0.07)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i += 1) {
+      const y = padding.t + chartHeight * i / 4;
+      ctx.beginPath();
+      ctx.moveTo(padding.l, y);
+      ctx.lineTo(padding.l + chartWidth, y);
+      ctx.stroke();
+    }
+    for (let i = 0; i < years.length; i += 1) {
+      const x = padding.l + chartWidth * i / (years.length - 1);
+      ctx.beginPath();
+      ctx.moveTo(x, padding.t);
+      ctx.lineTo(x, padding.t + chartHeight);
+      ctx.stroke();
+    }
+
+    const xOf = index => padding.l + chartWidth * index / (years.length - 1);
+    const yOfDensity = value => padding.t + chartHeight * (1 - (value - 100) / 350);
+    const yOfFrequency = value => padding.t + chartHeight * (1 - (value - 2.3) / 3.2);
+
+    function drawLine(data, yOf, color) {
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.moveTo(xOf(0), yOf(data[0]));
+      for (let i = 1; i < data.length; i += 1) ctx.lineTo(xOf(i), yOf(data[i]));
+      ctx.stroke();
+    }
+
+    function drawDots(data, yOf, color, formatter) {
+      data.forEach((value, index) => {
+        const x = xOf(index);
+        const y = yOf(value);
+        ctx.beginPath();
+        ctx.arc(x, y, compact ? 3 : 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        if (index === 0 || index === 3 || index === data.length - 1) {
+          ctx.font = `500 ${compact ? 9 : 10}px 'JetBrains Mono', monospace`;
+          ctx.fillStyle = color;
+          ctx.textAlign = 'center';
+          ctx.fillText(formatter(value), x, y - 9);
+        }
+      });
+    }
+
+    const x2026 = xOf(3);
+    ctx.strokeStyle = 'rgba(34,211,238,0.35)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x2026, padding.t);
+    ctx.lineTo(x2026, padding.t + chartHeight);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.font = `500 ${compact ? 8.5 : 9.5}px 'JetBrains Mono', monospace`;
+    ctx.fillStyle = 'rgba(34,211,238,0.65)';
+    ctx.textAlign = 'left';
+    ctx.fillText('LogicFolding era →', x2026 + 5, padding.t + 14);
+
+    drawLine(density, yOfDensity, 'rgba(34,211,238,0.9)');
+    drawLine(frequency, yOfFrequency, 'rgba(240,192,96,0.9)');
+    drawDots(density, yOfDensity, '#22d3ee', value => String(value));
+    drawDots(frequency, yOfFrequency, '#f0c060', value => value.toFixed(2));
+
+    ctx.font = `500 ${compact ? 9 : 10}px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(34,211,238,0.75)';
+    ctx.fillText(compact ? 'Density' : 'Density (MTr/mm²)', padding.l, padding.t - 10);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(240,192,96,0.75)';
+    ctx.fillText(compact ? 'Frequency' : 'P-Core Freq (GHz)', padding.l + chartWidth, padding.t - 10);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(200,200,220,0.55)';
+    ctx.font = `${compact ? 9 : 10}px 'JetBrains Mono', monospace`;
+    years.forEach((year, index) => {
+      if (!compact || index % 2 === 0 || index === 3 || index === years.length - 1) {
+        ctx.fillText(year, xOf(index), padding.t + chartHeight + 16);
+      }
+    });
+  }
+
+  const resizeObserver = new ResizeObserver(draw);
+  resizeObserver.observe(canvas);
+  draw();
+})();
+
+</script>
+
+</body>
+</html>
